@@ -1,10 +1,13 @@
-# Python
+# Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
+
+# C extensions
 *.so
+
+# Distribution / packaging
 .Python
-env/
 build/
 develop-eggs/
 dist/
@@ -16,37 +19,42 @@ lib64/
 parts/
 sdist/
 var/
+wheels/
 *.egg-info/
 .installed.cfg
 *.egg
 
-# Virtual Environment
+# Environment files
+.env
+.venv
+env/
 venv/
 ENV/
-env/
+env.bak/
+venv.bak/
 
-# Local configuration
-.env
-.env.*
-
-# Logs
-logs/
-*.log
-
-# Gradio
-.gradio/
-
-# Database
-*.db
-*.sqlite3
-
-# IDE
+# Local development settings
 .idea/
 .vscode/
 *.swp
 *.swo
 
-# OS
+# Logs
+logs/
+*.log
+
+# Database
+*.db
+*.sqlite3
+
+# MongoDB data
+data/
+mongo_data/
+
+# API keys and secrets
+.env
+
+# OS generated files
 .DS_Store
 .DS_Store?
 ._*

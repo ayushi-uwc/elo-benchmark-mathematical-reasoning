@@ -30,6 +30,10 @@ try:
 except:
     pass
 
+logger.info("*** IMPORTANT: USING STRICT VERDICT FORMATTING ***")
+logger.info("Judges must provide verdicts in the exact format: 'VERDICT: Model {A|B} is superior' or 'VERDICT: This is a tie'")
+logger.info("Invalid verdicts will result in judge disqualification and a 10-point ELO penalty")
+
 def print_header():
     """Print application header."""
     header = "\n" + "="*70 + "\n" + " "*25 + "LLM TOURNAMENT SYSTEM" + "\n" + "="*70 + "\n"
@@ -121,10 +125,12 @@ def print_model_stats(models: List[LLMModel], detailed: bool = False):
             print(f"\n{model.name}:")
             print(f"  Provider: {model.provider}")
             print(f"  Model ID: {model.model_id}")
-            print(f"  Parameters: {model.param_count} billion")
-            print(f"  Context window: {model.context_window} tokens")
-            print(f"  Input cost: ${model.input_cost_per_million} per million tokens")
-            print(f"  Output cost: ${model.output_cost_per_million} per million tokens")
+            print(f"  Input cost: ${model.input_cost_per_million}/million tokens")
+            print(f"  Output cost: ${model.output_cost_per_million}/million tokens")
+            if hasattr(model, 'pricing_source') and model.pricing_source:
+                print(f"  Pricing source: {model.pricing_source}")
+            print(f"  ELO rating: {model.elo['raw']['current']:.1f} (raw), {model.elo['cost_adjusted']['current']:.1f} (cost-adjusted)")
+            print(f"  Matches played: {model.performance['total_matches_played']}")
             print(f"  Raw ELO: {model.elo['raw']['current']:.1f} (started at {model.elo['raw']['initial']})")
             print(f"  Cost-Adjusted ELO: {model.elo['cost_adjusted']['current']:.1f}")
             print(f"  Record: {model.performance['wins_raw']}-{model.performance['losses_raw']}")
@@ -146,7 +152,7 @@ def print_model_stats(models: List[LLMModel], detailed: bool = False):
 
 def run_tournament(models: List[LLMModel], total_matches: int = None, batch_size: int = 10):
     """
-    Run tournament to ensure each model plays exactly 5 matches.
+    Run tournament to ensure each model plays exactly 20 matches.
     
     Args:
         models: List of all models
@@ -156,11 +162,11 @@ def run_tournament(models: List[LLMModel], total_matches: int = None, batch_size
     Returns:
         List of all matches executed
     """
-    # Calculate required matches to get 5 per model
-    target_matches_per_model = 1
+    # Calculate required matches to get 20 per model
+    target_matches_per_model = 20
     
     # Calculate a reasonable max_matches to use as safety limit if not provided
-    # This would be at most (n*5)/2 matches where n is the number of models
+    # This would be at most (n*20)/2 matches where n is the number of models
     if total_matches is None:
         theoretical_max = (len(models) * target_matches_per_model) // 2
         # Add a small buffer for safety
@@ -344,9 +350,9 @@ def main():
         print("\nStatistics display complete. Exiting...")
         return
     
-    # Run tournament to ensure each model plays exactly 5 matches
-    logger.info("Running tournament with target of 5 matches per model")
-    print("\nRunning tournament to ensure each model plays exactly 5 matches...")
+    # Run tournament to ensure each model plays exactly 20 matches
+    logger.info("Running tournament with target of 20 matches per model")
+    print("\nRunning tournament to ensure each model plays exactly 20 matches...")
     
     matches = run_tournament(all_models, args.max_matches, args.batch_size)
     

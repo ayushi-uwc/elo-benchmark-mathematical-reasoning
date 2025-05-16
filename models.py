@@ -2,6 +2,7 @@
 import time
 import json
 import asyncio
+import re  # Add regex import
 from datetime import datetime
 from typing import Dict, List, Any, Optional
 from config import DB_NAME, MODELS_COLLECTION
@@ -28,33 +29,26 @@ class LLMModel:
         name: str, 
         model_id: str, 
         provider: str,
-        param_count: int,
-        context_window: int,
+        pricing_source: str,
         input_cost_per_million: float,
         output_cost_per_million: float,
-        max_matches: int = 2,
-        is_proprietary: bool = False,
+        max_matches: int = 20,
         api_key: Optional[str] = None,
-        model_config: Optional[Dict[str, Any]] = None,
         initialize_new: bool = True
     ):
         logger.info(f"Initializing model: {name}")
-        logger.info(f"Provider: {provider}, Parameters: {param_count}B")
-        logger.info(f"Context window: {context_window}")
-        logger.info(f"Input cost per million: ${input_cost_per_million}, Output cost per million: ${output_cost_per_million}")
+        logger.info(f"Provider: {provider}")
         
         # Basic model info
         self.name = name
         self.model_id = model_id
         self.provider = provider
-        self.param_count = param_count
-        self.context_window = context_window
         self.input_cost_per_million = input_cost_per_million
         self.output_cost_per_million = output_cost_per_million
-        self.is_proprietary = is_proprietary
+        self.pricing_source = pricing_source
+        
         self.api_key = api_key
         self.max_matches = max_matches
-        self.model_config = model_config
 
         if initialize_new:
             logger.info("Initializing new model with default values")
@@ -103,12 +97,6 @@ class LLMModel:
         start = time.time()
 
         try:
-            # If we have a model configuration, use it to avoid API calls
-            if self.model_config and self.provider == "huggingface":
-                logger.info(f"Using stored model configuration for {self.name}")
-                # The model config is passed to litellm internally and no longer needs to be fetched
-                # This happens through the model registry in litellm
-
             # Make the API call with the model configuration
             response = completion(
                 model=self.model_id,
@@ -118,6 +106,10 @@ class LLMModel:
 
             # Extract metrics
             model_response = response['choices'][0]['message']['content']
+            
+            # Filter out any content between XML-style tags <anyword>...</anyword>
+            filtered_response = re.sub(r'<(\w+)>.*?</\1>', '', model_response, flags=re.DOTALL)
+            
             prompt_tokens = response['usage']['prompt_tokens']
             completion_tokens = response['usage']['completion_tokens']
             total_tokens = response['usage']['total_tokens']
@@ -144,7 +136,7 @@ class LLMModel:
             self.save_to_db()
 
             return {
-                "response": model_response,
+                "response": filtered_response,  # Return filtered response
                 "prompt_tokens": prompt_tokens,
                 "completion_tokens": completion_tokens,
                 "total_tokens": total_tokens,
@@ -172,7 +164,8 @@ class LLMModel:
         """Async version of generate method for concurrent processing."""
         # Use an executor to run the synchronous generate method in a thread
         loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(None, self.generate, prompt)
+        result = await loop.run_in_executor(None, self.generate, prompt)
+        return result
     
     @property
     def avg_tokens_per_response(self):
@@ -194,15 +187,12 @@ class LLMModel:
             "name": self.name,
             "model_id": self.model_id,
             "provider": self.provider,
-            "param_count": self.param_count,
-            "context_window": self.context_window,
             "input_cost_per_million": self.input_cost_per_million,
             "output_cost_per_million": self.output_cost_per_million,
             "cost_per_million": self.output_cost_per_million,  # For backward compatibility
-            "is_proprietary": self.is_proprietary,
+            "pricing_source": self.pricing_source,
             "api_key": self.api_key,
             "max_matches": self.max_matches,
-            "model_config": self.model_config,
             "elo": self.elo,
             "performance": self.performance,
             "match_ids": self.match_ids,
@@ -227,14 +217,11 @@ class LLMModel:
             name=data["name"],
             model_id=data["model_id"],
             provider=data["provider"],
-            param_count=data["param_count"],
-            context_window=data["context_window"],
             input_cost_per_million=input_cost,
             output_cost_per_million=output_cost,
-            max_matches=data.get("max_matches", 2), 
-            is_proprietary=data.get("is_proprietary", False),
+            max_matches=data.get("max_matches", 20),
+            pricing_source=data.get("pricing_source", ""),
             api_key=data.get("api_key"),
-            model_config=data.get("model_config"),
             initialize_new=False  # Don't initialize new values
         )
         
@@ -266,7 +253,7 @@ class LLMModel:
         model.metadata = data.get("metadata", {
             "notes": "",
             "capacity": {
-                "max_matches": data.get("max_matches", 2),
+                "max_matches": data.get("max_matches", 20),
             },
             "last_updated": datetime.utcnow().isoformat() + "Z"
         })
@@ -369,12 +356,6 @@ def initialize_models(models_data: List[Dict[str, Any]]):
         existing_model = LLMModel.load_from_db(model_info["name"])
         
         if existing_model:
-            # Update configuration if needed
-            if model_info.get("model_config") and not existing_model.model_config:
-                logger.info(f"Updating model configuration for {existing_model.name}")
-                existing_model.model_config = model_info["model_config"]
-                existing_model.save_to_db()
-            
             print(f"Loaded existing model: {existing_model}")
             initialized_models.append(existing_model)
         else:
@@ -383,14 +364,11 @@ def initialize_models(models_data: List[Dict[str, Any]]):
                 name=model_info["name"],
                 model_id=model_info["model_id"],
                 provider=model_info["provider"],
-                param_count=model_info["param_count"],
-                context_window=model_info["context_window"],
                 input_cost_per_million=model_info.get("input_cost_per_million", model_info.get("cost_per_million", 0)),
                 output_cost_per_million=model_info.get("output_cost_per_million", model_info.get("cost_per_million", 0)),
-                max_matches=model_info.get("max_matches", 2),
-                is_proprietary=model_info.get("is_proprietary", True),
-                api_key=model_info.get("api_key"),
-                model_config=model_info.get("model_config")
+                max_matches=model_info.get("max_matches", 20),
+                pricing_source=model_info.get("pricing_source", ""),
+                api_key=model_info.get("api_key")
             )
             
             # Save to database

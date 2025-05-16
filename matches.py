@@ -581,15 +581,17 @@ def generate_judge_prompt(case_text: str, question_text: str, first_response: st
         "VERDICT: Response B is superior."
         "VERDICT: This is a tie."
         
-        "Examples of clear verdicts:"
-        "Example 1: '...After evaluating both responses against the criteria, Response A provides a more accurate diagnosis with better supporting evidence. VERDICT: Response A is superior.'"
-        "Example 2: '...While both responses correctly identify the key issues, Response B offers a more comprehensive treatment plan with better safety considerations. VERDICT: Response B is superior.'"
-        "Example 3: '...Both responses demonstrate equal clinical competence with similar reasoning and evidence-based approaches. VERDICT: This is a tie.'"
+        "IMPORTANT: If your verdict is not provided in exactly one of these three formats, your judgment will be considered invalid and automatically discarded. Judges who fail to follow this format will be removed from the judge pool and may incur an ELO rating penalty."
         
-        "Your evaluation must include this exact verdict format so it can be properly recorded."
+        "Examples of properly formatted verdicts:"
+        "Example 1: 'After evaluating both responses, Response A shows better diagnostic accuracy and clearer reasoning. VERDICT: Model A is superior'"
+        "Example 2: 'While both responses identify key issues, Response B provides better evidence and treatment rationale. VERDICT: Model B is superior'"
+        "Example 3: 'Both responses demonstrate equivalent clinical competence and reasoning. VERDICT: This is a tie'"
+        
+        "Your evaluation MUST end with the exact verdict format as shown above."
     )
     
-    logger.info(f"Generated judge evaluation prompt with explicit verdict format")
+    logger.info(f"Generated judge evaluation prompt with standardized verdict format")
     return prompt
 
 # Pairing and Tournament management functions

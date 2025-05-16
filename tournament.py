@@ -18,6 +18,9 @@ from model_definitions import MODEL_CAPS
 from database import db
 from logger_config import get_logger
 
+# Define the verdict pattern constant
+VALID_VERDICT_PATTERN = r"VERDICT:\s*(Response\s*A\s*is\s*superior|Response\s*B\s*is\s*superior|This\s*is\s*a\s*tie)"
+
 # Get logger for this module
 logger = get_logger(__name__)
 
@@ -49,7 +52,7 @@ def get_nested_attr(obj, attr_path):
             obj = getattr(obj, attr)
     return obj
 
-def inverse_weighted_choice(models, match_count_key="performance.total_matches_played", max_matches=1):
+def inverse_weighted_choice(models, match_count_key="performance.total_matches_played", max_matches=20):
     """
     Select one model from a list with inverse match-count weighting,
     excluding models with >= max_matches.
@@ -126,7 +129,7 @@ def inverse_weighted_choice(models, match_count_key="performance.total_matches_p
     
     return selected
 
-def select_pair(models, initial_delta=100, delta_step=50, max_delta=400, max_matches=1,
+def select_pair(models, initial_delta=50, delta_step=25, max_delta=400, max_matches=20,
                 elo_key="elo.cost_adjusted.current", match_count_key="performance.total_matches_played", 
                 prior_matches=None):
     """
@@ -429,10 +432,8 @@ def choose_case_question_judges(models: List[LLMModel],
     # Select top models
     global_top_models = all_sorted_models[:top_size]
     
-    # Get cutoff score for logging
-    top_models_min_score = score_field(global_top_models[-1])
-    logger.info(f"  Top models {score_label} cutoff: {top_models_min_score:.1f}")
-    logger.info(f"  Top {top_size} models pool:")
+    # Log details about the top models pool (without mentioning any ELO cutoff)
+    logger.info(f"  Selected top {top_size} models for role assignment")
     for i, model in enumerate(global_top_models, 1):
         logger.info(f"    {i}. {model.name}: {score_label}={score_field(model):.1f}")
     
@@ -532,12 +533,13 @@ async def get_judge_vote(judge, judge_prompt, first_model, second_model):
     vote_text = judge_result["response"].strip()
     logger.info(f"RESPONSE FROM JUDGE {judge.name}:\n{'-'*50}\n{vote_text}\n{'-'*50}")
     
-    # First check for the explicit verdict format
+    # Check for the required standardized verdict format
     import re
     verdict_pattern = r"VERDICT:\s*(Response\s*A\s*is\s*superior|Response\s*B\s*is\s*superior|This\s*is\s*a\s*tie)"
     verdict_match = re.search(verdict_pattern, vote_text, re.IGNORECASE)
     
     if verdict_match:
+        # Valid verdict format found
         verdict = verdict_match.group(1).lower()
         logger.info(f"Found explicit verdict: '{verdict}'")
         
@@ -553,102 +555,38 @@ async def get_judge_vote(judge, judge_prompt, first_model, second_model):
             vote = "draw"
             vote_type = "draw"
             logger.info(f"Judge {judge.name} explicitly declared a tie")
+        
         return {
             "judge": judge,
             "vote": vote,
             "vote_type": vote_type,
-            "semantic_confidence": 1.0  # Max confidence for explicit verdicts
+            "verdict_valid": True,
+            "verdict_text": verdict,
+            "prompt": judge_prompt,
+            "response": vote_text
         }
-    
-    # If no explicit verdict, proceed with semantic matching
-    vote_text_lower = vote_text.lower()
-    
-    # First try semantic matching if available
-    if SEMANTIC_MATCHING_AVAILABLE:
-        semantic_vote, confidence = semantic_judge_vote_matching(vote_text, first_model.name, second_model.name)
-        logger.info(f"Semantic vote analysis: {semantic_vote} (confidence: {confidence:.4f})")
-        
-        if semantic_vote and confidence > 0.5:  # Use semantic vote if confidence is high enough
-            if semantic_vote == 'a':
-                vote = first_model.model_id
-                vote_type = "win"
-                logger.info(f"Judge {judge.name} semantically voted for Response A ({first_model.name}) with {confidence:.4f} confidence")
-            elif semantic_vote == 'b':
-                vote = second_model.model_id
-                vote_type = "win"
-                logger.info(f"Judge {judge.name} semantically voted for Response B ({second_model.name}) with {confidence:.4f} confidence")
-            else:
-                vote = "draw"
-                vote_type = "draw"
-                logger.info(f"Judge {judge.name} semantically declared a draw/tie with {confidence:.4f} confidence")
-                
-            return {
-                "judge": judge,
-                "vote": vote,
-                "vote_type": vote_type,
-                "semantic_confidence": confidence
-            }
-    
-    # Fall back to regex/pattern matching if semantic matching is not available or had low confidence
-    # Extract vote from anonymized response - improved detection
-    if "response a" in vote_text_lower or "response a is superior" in vote_text_lower:
-        # Vote for Response A (model_a)
-        vote = first_model.model_id
-        vote_type = "win"
-        logger.info(f"Judge {judge.name} voted for Response A ({first_model.name})")
-    elif "response b" in vote_text_lower or "response b is superior" in vote_text_lower:
-        # Vote for Response B (model_b)
-        vote = second_model.model_id
-        vote_type = "win"
-        logger.info(f"Judge {judge.name} voted for Response B ({second_model.name})")
-    elif "tie" in vote_text_lower or "draw" in vote_text_lower or "this is a tie" in vote_text_lower:
-        # Declared a draw
-        vote = "draw"
-        vote_type = "draw"
-        logger.info(f"Judge {judge.name} declared a draw/tie")
     else:
-        # Default if unclear - do a more detailed analysis
-        logger.warning(f"Judge {judge.name} produced unclear vote: '{vote_text}'. Analyzing final sentence.")
+        # Invalid verdict format - apply penalties
+        logger.warning(f"Judge {judge.name} failed to provide a properly formatted verdict")
+        logger.warning(f"No match for required pattern: {VALID_VERDICT_PATTERN}")
         
-        # Extract the last few sentences to look for the decision
-        last_lines = vote_text_lower.split('\n')[-3:]  # Take the last 3 lines
-        last_text = ' '.join(last_lines)
+        # Apply ELO penalty to judge on BOTH rating tracks
+        ELO_PENALTY = 10  # 10 points as specified in the requirements
+        judge.elo["raw"]["current"] -= ELO_PENALTY
+        judge.elo["cost_adjusted"]["current"] -= ELO_PENALTY  # Apply to cost-adjusted track as well
+        logger.warning(f"Applied ELO penalty of {ELO_PENALTY} points to {judge.name} on both ELO tracks")
+        judge.save_to_db()
         
-        if "a" in last_text and "better" in last_text and not "b" in last_text:
-            vote = first_model.model_id
-            vote_type = "win"
-            logger.info(f"Final sentence analysis: Judge {judge.name} voted for Response A ({first_model.name})")
-        elif "b" in last_text and "better" in last_text and not "a" in last_text:
-            vote = second_model.model_id
-            vote_type = "win"
-            logger.info(f"Final sentence analysis: Judge {judge.name} voted for Response B ({second_model.name})")
-        elif "tie" in last_text or "equivalent" in last_text or "equal" in last_text:
-            vote = "draw"
-            vote_type = "draw"
-            logger.info(f"Final sentence analysis: Judge {judge.name} declared a draw/tie")
-        else:
-            # Still unclear, use random choice
-            logger.warning(f"Final sentence analysis inconclusive. Defaulting to random choice.")
-            choice = random.choice(["a", "b", "draw"])
-            if choice == "a":
-                vote = first_model.model_id
-                vote_type = "win"
-                logger.info(f"Randomly assigned Response A ({first_model.name}) to judge {judge.name}")
-            elif choice == "b":
-                vote = second_model.model_id
-                vote_type = "win"
-                logger.info(f"Randomly assigned Response B ({second_model.name}) to judge {judge.name}")
-            else:
-                vote = "draw"
-                vote_type = "draw"
-                logger.info(f"Randomly assigned Draw to judge {judge.name}")
-    
-    return {
-        "judge": judge,
-        "vote": vote,
-        "vote_type": vote_type,
-        "semantic_confidence": 0.0
-    }
+        # Return invalid verdict result
+        return {
+            "judge": judge,
+            "vote": None,
+            "vote_type": "invalid",
+            "verdict_valid": False,
+            "verdict_text": None,
+            "prompt": judge_prompt,
+            "response": vote_text
+        }
 
 # Helper function to run async tasks within a synchronous context
 def run_async_tasks(tasks):
@@ -661,7 +599,7 @@ def run_async_tasks(tasks):
     finally:
         loop.close()
 
-def run_tournament_matches(models: List[LLMModel], max_matches: int = 1, prior_matches: Optional[Set[Tuple[str, str]]] = None) -> List[Match]:
+def run_tournament_matches(models: List[LLMModel], max_matches: int = 20, prior_matches: Optional[Set[Tuple[str, str]]] = None) -> List[Match]:
     """
     Run tournament matches until each model plays exactly 1 match.
     
@@ -681,10 +619,10 @@ def run_tournament_matches(models: List[LLMModel], max_matches: int = 1, prior_m
     logger.info("\nMODEL PROPERTIES (Per Section 3.1 of methodology):")
     
     # Create a table header with proper borders
-    header = "┌─────────────────────────┬───────────────┬──────────┬──────────┬──────────┬──────────┬──────────┬──────────┬────────┐"
-    column_headers = f"│ {'Model Name':<23} │ {'Provider':<13} │ {'Params (B)':<8} │ {'Context':<8} │ {'In Cost':<8} │ {'Out Cost':<8} │ {'Raw ELO':<8} │ {'Cost-ELO':<8} │ {'Matches':<6} │"
-    separator = "├─────────────────────────┼───────────────┼──────────┼──────────┼──────────┼──────────┼──────────┼──────────┼────────┤"
-    bottom = "└─────────────────────────┴───────────────┴──────────┴──────────┴──────────┴──────────┴──────────┴──────────┴────────┘"
+    header = "┌─────────────────────────┬───────────────┬──────────┬──────────┬──────────┬──────────┬────────┐"
+    column_headers = f"│ {'Model Name':<23} │ {'Provider':<13} │ {'In Cost':<8} │ {'Out Cost':<8} │ {'Raw ELO':<8} │ {'Cost-ELO':<8} │ {'Matches':<6} │"
+    separator = "├─────────────────────────┼───────────────┼──────────┼──────────┼──────────┼──────────┼────────┤"
+    bottom = "└─────────────────────────┴───────────────┴──────────┴──────────┴──────────┴──────────┴────────┘"
     
     # Collect all model property rows
     model_rows = []
@@ -692,11 +630,16 @@ def run_tournament_matches(models: List[LLMModel], max_matches: int = 1, prior_m
     
     # Model data rows
     for model in sorted(models, key=lambda m: m.name):
-        model_row = (f"│ {model.name:<23} │ {model.provider:<13} │ {model.param_count:<8.1f} │ {model.context_window:<8} │"
+        model_row = (f"│ {model.name:<23} │ {model.provider:<13} │"
                   f" ${model.input_cost_per_million:<7.6f} │ ${model.output_cost_per_million:<7.6f} │ {model.elo['raw']['current']:<8.1f} │"
                   f" {model.elo['cost_adjusted']['current']:<8.1f} │ {model.performance['total_matches_played']:<6} │")
         model_rows.append(model_row)
-        model_info.append(f"Model {model.name}: {model.param_count:.1f}B params, Provider: {model.provider}, ELO: {model.elo['raw']['current']:.1f}")
+        
+        # Build model info string
+        model_info_parts = [f"Model {model.name}:"]
+        model_info_parts.append(f"Provider: {model.provider},")
+        model_info_parts.append(f"ELO: {model.elo['raw']['current']:.1f}")
+        model_info.append(" ".join(model_info_parts))
     
     # Now log the complete table without interruptions
     logger.table("")
@@ -744,17 +687,17 @@ def run_tournament_matches(models: List[LLMModel], max_matches: int = 1, prior_m
     match_counts = {model.name: model.performance['total_matches_played'] for model in models}
     logger.info("\nCurrent match counts:")
     for name, count in match_counts.items():
-        logger.info(f"  {name}: {count}/5 matches played")
+        logger.info(f"  {name}: {count}/20 matches played")
     
     # Define target match count per model
-    target_matches_per_model = 5
+    target_matches_per_model = 20
     
     # Collect the matches for this tournament
     matches = []
     match_count = 0
     safety_limit = max_matches  # Safety limit to prevent infinite loops
     
-    # Continue until all models have played exactly 5 matches or we hit safety limit
+    # Continue until all models have played exactly 4 matches or we hit safety limit
     while (any(count < target_matches_per_model for count in match_counts.values()) and 
            match_count < safety_limit):
         
@@ -784,7 +727,7 @@ def run_tournament_matches(models: List[LLMModel], max_matches: int = 1, prior_m
             # Try again with increased delta
             model_a, model_b = select_pair(
                 eligible_models,
-                initial_delta=200,
+                initial_delta=100,
                 max_delta=800,
                 prior_matches=prior_matches
             )
@@ -972,80 +915,114 @@ def run_tournament_matches(models: List[LLMModel], max_matches: int = 1, prior_m
             vote_summary = {
                 model_a.name: 0,
                 model_b.name: 0,
-                "tie": 0
+                "tie": 0,
+                "invalid": 0
             }
             
-            # Process judge results
+            # Track judges with invalid verdicts to remove them from consideration
+            invalid_judges = []
+            valid_judge_results = []
+            
+            # First identify invalid judgments
             for result in judge_results:
                 judge = result["judge"]
-                vote = result["vote"]
-                vote_type = result["vote_type"]
-                semantic_confidence = result.get("semantic_confidence", 0.0)
+                verdict_valid = result.get("verdict_valid", True)  # Default to True for backward compatibility
                 
-                # Determine which actual model was voted for
-                if vote != "draw":
-                    voted_model_name = model_key_to_name.get(vote, "unknown")
-                    logger.info(f"Judge {judge.name} voted for {voted_model_name}" + 
-                              (f" (confidence: {semantic_confidence:.4f})" if semantic_confidence > 0 else ""))
-                    vote_summary[voted_model_name] += 1
+                if not verdict_valid:
+                    logger.warning(f"Excluding judge {judge.name} due to invalid verdict format")
+                    invalid_judges.append(judge)
+                    vote_summary["invalid"] += 1
                 else:
-                    logger.info(f"Judge {judge.name} declared a draw/tie" +
-                              (f" (confidence: {semantic_confidence:.4f})" if semantic_confidence > 0 else ""))
-                    vote_summary["tie"] += 1
-                
-                # Add to judge votes
-                if vote_type == "win":
-                    if vote not in judge_votes:
-                        judge_votes[vote] = 0
-                    judge_votes[vote] += 1
-                elif vote_type == "draw":
-                    # Add half a vote to each model for draws
-                    if model_a.model_id not in judge_votes:
-                        judge_votes[model_a.model_id] = 0
-                    if model_b.model_id not in judge_votes:
-                        judge_votes[model_b.model_id] = 0
-                    judge_votes[model_a.model_id] += 0.5
-                    judge_votes[model_b.model_id] += 0.5
-                
-                # Record vote in match
-                weight = 1.0 / len(judges)  # Initial weight (will be updated later)
-                match.add_judge(judge, vote, weight, vote_type, 
-                              prompt="[Recalculated weight]", 
-                              response="[Weight recalculation]")
+                    valid_judge_results.append(result)
             
-            # Log the vote summary table
-            logger.info("\nVOTE SUMMARY:")
-            for model_name, votes in vote_summary.items():
-                logger.info(f"  {model_name}: {votes} votes")
-            
-            # Calculate final scores based on judge votes
-            model_a_id = model_a.model_id
-            model_b_id = model_b.model_id
-            
-            # Ensure both models have entries in judge_votes
-            if model_a_id not in judge_votes:
-                judge_votes[model_a_id] = 0
-            if model_b_id not in judge_votes:
-                judge_votes[model_b_id] = 0
-            
-            # Raw score is proportion of votes (with draws counting as 0.5)
-            total_votes = judge_votes[model_a_id] + judge_votes[model_b_id]
-            if total_votes == 0:
-                logger.error("No valid votes cast. Defaulting to equal scores.")
-                raw_scores = {model_a_id: 0.5, model_b_id: 0.5}
+            # If all judges provided invalid verdicts, we can't proceed
+            if len(valid_judge_results) == 0:
+                logger.error("No valid judge verdicts found! Cannot determine match outcome.")
+                logger.error("Assigning random outcome as fallback.")
+                random_outcome = random.choice(["a", "b", "draw"])
+                if random_outcome == "a":
+                    judge_votes = {model_a.model_id: 1, model_b.model_id: 0}
+                elif random_outcome == "b":
+                    judge_votes = {model_a.model_id: 0, model_b.model_id: 1}
+                else:
+                    judge_votes = {model_a.model_id: 0.5, model_b.model_id: 0.5}
             else:
-                raw_scores = {
-                    model_a_id: judge_votes[model_a_id] / total_votes,
-                    model_b_id: judge_votes[model_b_id] / total_votes
-                }
-            
-            logger.info(f"Raw scores from unweighted votes: {model_a.name}: {raw_scores.get(model_a_id, 0):.2f}, {model_b.name}: {raw_scores.get(model_b_id, 0):.2f}")
-            
-            # ===== VOTE WEIGHTING AND SCORE CALCULATION =====
-            logger.info(f"\n{'='*30} JUDGMENT AND SCORING {'='*30}")
-            logger.info(f"Following Section 3.6 (Federated Judgment by Peer Models)")
-            logger.info(f"Using {len(judges)} judges with raw-ELO softmax weighting")
-            logger.info(f"Match: {model_a.name} vs {model_b.name}")
+                # Process valid judge results only
+                judge_votes = {}
+                
+                for result in valid_judge_results:
+                    judge = result["judge"]
+                    vote = result["vote"]
+                    vote_type = result["vote_type"]
+                    judge_prompt = result.get("prompt", "")
+                    judge_response = result.get("response", "")
+                    
+                    # Determine which actual model was voted for
+                    if vote_type == "win":
+                        voted_model_name = model_key_to_name.get(vote, "unknown")
+                        logger.info(f"Judge {judge.name} voted for {voted_model_name}")
+                        vote_summary[voted_model_name] += 1
+                        
+                        # Add to judge votes
+                        if vote not in judge_votes:
+                            judge_votes[vote] = 0
+                        judge_votes[vote] += 1
+                    elif vote_type == "draw":
+                        logger.info(f"Judge {judge.name} declared a draw/tie")
+                        vote_summary["tie"] += 1
+                        
+                        # Add half a vote to each model for draws
+                        if model_a.model_id not in judge_votes:
+                            judge_votes[model_a.model_id] = 0
+                        if model_b.model_id not in judge_votes:
+                            judge_votes[model_b.model_id] = 0
+                        judge_votes[model_a.model_id] += 0.5
+                        judge_votes[model_b.model_id] += 0.5
+                    
+                    # Record vote in match - only for valid votes
+                    weight = 1.0 / len(valid_judge_results)  # Recalculate weights based on valid judges only
+                    match.add_judge(judge, vote, weight, vote_type, 
+                                   prompt=judge_prompt, 
+                                   response=judge_response)
+                
+                # Log the vote summary table
+                logger.info("\nVOTE SUMMARY:")
+                for category, count in vote_summary.items():
+                    logger.info(f"  {category}: {count} votes")
+                
+                if invalid_judges:
+                    logger.warning(f"\n{len(invalid_judges)} judges provided invalid verdicts and were excluded:")
+                    for j in invalid_judges:
+                        logger.warning(f"  - {j.name}")
+                
+                # Calculate final scores based on judge votes
+                model_a_id = model_a.model_id
+                model_b_id = model_b.model_id
+                
+                # Ensure both models have entries in judge_votes
+                if model_a_id not in judge_votes:
+                    judge_votes[model_a_id] = 0
+                if model_b_id not in judge_votes:
+                    judge_votes[model_b_id] = 0
+                
+                # Raw score is proportion of votes (with draws counting as 0.5)
+                total_votes = judge_votes[model_a_id] + judge_votes[model_b_id]
+                if total_votes == 0:
+                    logger.error("No valid votes cast. Defaulting to equal scores.")
+                    raw_scores = {model_a_id: 0.5, model_b_id: 0.5}
+                else:
+                    raw_scores = {
+                        model_a_id: judge_votes[model_a_id] / total_votes,
+                        model_b_id: judge_votes[model_b_id] / total_votes
+                    }
+                
+                logger.info(f"Raw scores from unweighted votes: {model_a.name}: {raw_scores.get(model_a_id, 0):.2f}, {model_b.name}: {raw_scores.get(model_b_id, 0):.2f}")
+                
+                # ===== VOTE WEIGHTING AND SCORE CALCULATION =====
+                logger.info(f"\n{'='*30} JUDGMENT AND SCORING {'='*30}")
+                logger.info(f"Following Section 3.6 (Federated Judgment by Peer Models)")
+                logger.info(f"Using {len(judges)} judges with raw-ELO softmax weighting")
+                logger.info(f"Match: {model_a.name} vs {model_b.name}")
 
             # Calculate judge weights using softmax (Equation 8)
             judge_elos = [j.elo["raw"]["current"] for j in judges]
@@ -1130,10 +1107,11 @@ def run_tournament_matches(models: List[LLMModel], max_matches: int = 1, prior_m
                 vote_row = f"│ {judge.name:<13} │ {vote_for:<13} │ {vote_type:<8} │ {weight:<8.6f} │ {contrib_a:<13.6f} │ {contrib_b:<13.6f} │"
                 vote_rows.append(vote_row)
                 
-                # Add to match object
-                match.add_judge(judge, vote, weight, vote_type, 
-                                prompt="[Recalculated weight]", 
-                                response="[Weight recalculation]")
+                # Keep existing judge entry but update the weight
+                # (original prompt and response will be preserved from the first add_judge call)
+                judge_entry = next((j for j in match.judgment["judges"] if j["judge_id"] == judge.model_id), None)
+                if judge_entry:
+                    judge_entry["weight"] = weight
                                 
                 # Add info for standard logging
                 vote_info.append(f"Judge {judge.name} voted for {vote_for} with weight {weight:.6f}, contributing {contrib_a:.6f} to A and {contrib_b:.6f} to B")
@@ -1173,30 +1151,54 @@ def run_tournament_matches(models: List[LLMModel], max_matches: int = 1, prior_m
             logger.info(f"S_adj^A = S_raw^A * (c_avg/c_A)^0.5")
             
             # Calculate response costs
-            cost_a = result_a["cost"]  # Fixed: Use dictionary access
-            cost_b = result_b["cost"]  # Fixed: Use dictionary access
-            avg_cost = (cost_a + cost_b) / 2
+            cost_a = result_a["cost"]
+            cost_b = result_b["cost"]
             
             logger.info(f"\nResponse costs:")
             logger.info(f"  {model_a.name}: ${cost_a:.6f}")
             logger.info(f"  {model_b.name}: ${cost_b:.6f}")
-            logger.info(f"  Average cost: ${avg_cost:.6f}")
             
-            # Calculate cost adjustment factors
-            factor_a = math.sqrt(avg_cost / cost_a) if cost_a > 0 else 1.0
-            factor_b = math.sqrt(avg_cost / cost_b) if cost_b > 0 else 1.0
+            # Calculate efficiency weights following equation 16
+            temperature_c = 0.05  # τ_c value from the paper
             
-            logger.info(f"\nCost adjustment factors (c_avg/c_model)^0.5:")
-            logger.info(f"  {model_a.name}: ({avg_cost:.6f}/{cost_a:.6f})^0.5 = {factor_a:.6f}")
-            logger.info(f"  {model_b.name}: ({avg_cost:.6f}/{cost_b:.6f})^0.5 = {factor_b:.6f}")
+            # Efficiency weight of A equals e to the minus cost of A over τ_c, 
+            # divided by [e to the minus cost of A over τ_c plus e to the minus cost of B over τ_c]
+            numerator_a = math.exp(-cost_a / temperature_c)  # e^(-cost_A/τ_c)
+            numerator_b = math.exp(-cost_b / temperature_c)  # e^(-cost_B/τ_c)
             
-            # Apply cost adjustment to raw scores
-            adj_score_a = raw_score_a * factor_a
-            adj_score_b = raw_score_b * factor_b
+            denominator = numerator_a + numerator_b  # Sum of the two exponentials
             
-            logger.info(f"\nFinal cost-adjusted scores (Equation 11):")
-            logger.info(f"  S_adj^{model_a.name} = {raw_score_a:.6f} * {factor_a:.6f} = {adj_score_a:.6f}")
-            logger.info(f"  S_adj^{model_b.name} = {raw_score_b:.6f} * {factor_b:.6f} = {adj_score_b:.6f}")
+            # Complete efficiency weights calculation
+            eff_a = numerator_a / denominator
+            eff_b = numerator_b / denominator
+            
+            logger.info(f"\nEfficiency weights calculation (equation 16):")
+            logger.info(f"  numerator_A = e^(-cost_A/τ_c) = e^(-{cost_a:.6f}/{temperature_c}) = {numerator_a:.6f}")
+            logger.info(f"  numerator_B = e^(-cost_B/τ_c) = e^(-{cost_b:.6f}/{temperature_c}) = {numerator_b:.6f}")
+            logger.info(f"  denominator = numerator_A + numerator_B = {numerator_a:.6f} + {numerator_b:.6f} = {denominator:.6f}")
+            logger.info(f"  eff_A = numerator_A / denominator = {numerator_a:.6f} / {denominator:.6f} = {eff_a:.6f}")
+            logger.info(f"  eff_B = numerator_B / denominator = {numerator_b:.6f} / {denominator:.6f} = {eff_b:.6f}")
+            
+            # Cost-adjusted match score of A equals (S_raw_A times eff_A) divided by
+            # [S_raw_A times eff_A plus S_raw_B times eff_B]
+            
+            # Calculate terms for cost-adjusted scores using equation 17
+            term_a = raw_score_a * eff_a  # S_raw_A * eff_A
+            term_b = raw_score_b * eff_b  # S_raw_B * eff_B
+            
+            # Sum of the terms for the denominator
+            score_denominator = term_a + term_b
+            
+            # Calculate the final adjusted scores
+            adj_score_a = term_a / score_denominator if score_denominator > 0 else 0.5
+            adj_score_b = term_b / score_denominator if score_denominator > 0 else 0.5
+            
+            logger.info(f"\nCost-adjusted scores calculation (Equation 17):")
+            logger.info(f"  term_A = S_raw_A * eff_A = {raw_score_a:.6f} * {eff_a:.6f} = {term_a:.6f}")
+            logger.info(f"  term_B = S_raw_B * eff_B = {raw_score_b:.6f} * {eff_b:.6f} = {term_b:.6f}")
+            logger.info(f"  denominator = term_A + term_B = {term_a:.6f} + {term_b:.6f} = {score_denominator:.6f}")
+            logger.info(f"  S_adj_A = term_A / denominator = {term_a:.6f} / {score_denominator:.6f} = {adj_score_a:.6f}")
+            logger.info(f"  S_adj_B = term_B / denominator = {term_b:.6f} / {score_denominator:.6f} = {adj_score_b:.6f}")
             
             # Record adjusted scores in the correct format for the match object
             raw_scores = {
@@ -1213,78 +1215,112 @@ def run_tournament_matches(models: List[LLMModel], max_matches: int = 1, prior_m
             
             # ===== UPDATE ELO RATINGS =====
             logger.info(f"\n{'='*30} ELO RATING UPDATE {'='*30}")
-            logger.info(f"Following Section 3.8 (Equations 12-15)")
-            
-            # Fetch current ELO ratings
-            raw_elo_a = model_a.elo["raw"]["current"]
-            raw_elo_b = model_b.elo["raw"]["current"]
-            cost_elo_a = model_a.elo["cost_adjusted"]["current"]
-            cost_elo_b = model_b.elo["cost_adjusted"]["current"]
-            
-            logger.info(f"\nCurrent ELO ratings:")
-            logger.info(f"  {model_a.name}: Raw ELO = {raw_elo_a:.1f}, Cost-Adjusted ELO = {cost_elo_a:.1f}")
-            logger.info(f"  {model_b.name}: Raw ELO = {raw_elo_b:.1f}, Cost-Adjusted ELO = {cost_elo_b:.1f}")
+            logger.info(f"Following exact step-by-step calculation process")
             
             # K-factor from paper
             K = 16
-            logger.info(f"\nUsing K-factor = {K} as specified in Section 3.8")
+            logger.info(f"\nUsing K-factor = {K} as specified")
             
-            # ===== RAW ELO UPDATE =====
-            # Calculate win probability using logistic function (Equation 12-13)
-            raw_expect_a = 1 / (1 + math.pow(10, (raw_elo_b - raw_elo_a) / 400))
-            raw_expect_b = 1 - raw_expect_a
+            # ===== ELO RATING VARIABLES =====
+            # Current ratings
+            old_raw_rating_of_A = model_a.elo["raw"]["current"]
+            old_raw_rating_of_B = model_b.elo["raw"]["current"]
+            old_cost_rating_of_A = model_a.elo["cost_adjusted"]["current"]
+            old_cost_rating_of_B = model_b.elo["cost_adjusted"]["current"]
             
-            logger.info(f"\nEQUATION 13: EXPECTED WIN PROBABILITIES (RAW ELO)")
-            logger.info(f"E_A = 1 / (1 + 10^((R_B - R_A)/400))")
-            logger.info(f"  E_{model_a.name} = 1 / (1 + 10^(({raw_elo_b:.1f} - {raw_elo_a:.1f})/400)) = {raw_expect_a:.6f}")
-            logger.info(f"  E_{model_b.name} = 1 - E_{model_a.name} = {raw_expect_b:.6f}")
+            logger.info(f"\nCurrent ELO ratings:")
+            logger.info(f"  Old raw rating of A ({model_a.name}): {old_raw_rating_of_A:.1f}")
+            logger.info(f"  Old raw rating of B ({model_b.name}): {old_raw_rating_of_B:.1f}")
+            logger.info(f"  Old cost rating of A ({model_a.name}): {old_cost_rating_of_A:.1f}")
+            logger.info(f"  Old cost rating of B ({model_b.name}): {old_cost_rating_of_B:.1f}")
             
-            # Calculate ELO updates (Equation 14-15)
-            # S_A and S_B are the actual scores (between 0 and 1)
-            raw_score_a_norm = raw_score_a  # Already normalized as sum of weights is 1
-            raw_score_b_norm = raw_score_b
+            # ===== EXPECTED SCORES =====
+            # Expected raw score of A = 1 divided by [1 plus 10 to the power of (raw rating of B minus raw rating of A divided by 400)]
+            expected_raw_score_of_A = 1.0 / (1.0 + math.pow(10, (old_raw_rating_of_B - old_raw_rating_of_A) / 400.0))
             
-            logger.info(f"\nEQUATION 14-15: ELO UPDATES (RAW)")
-            logger.info(f"ΔR_A = K * (S_A - E_A)")
+            # Expected cost score of A = 1 divided by [1 plus 10 to the power of (cost rating of B minus cost rating of A divided by 400)]
+            expected_cost_score_of_A = 1.0 / (1.0 + math.pow(10, (old_cost_rating_of_B - old_cost_rating_of_A) / 400.0))
             
-            raw_delta_a = K * (raw_score_a_norm - raw_expect_a)
-            raw_delta_b = K * (raw_score_b_norm - raw_expect_b)
+            # Expected raw score of B = 1 minus expected raw score of A
+            expected_raw_score_of_B = 1.0 - expected_raw_score_of_A
             
-            logger.info(f"  ΔR_{model_a.name} = {K} * ({raw_score_a_norm:.6f} - {raw_expect_a:.6f}) = {raw_delta_a:.6f}")
-            logger.info(f"  ΔR_{model_b.name} = {K} * ({raw_score_b_norm:.6f} - {raw_expect_b:.6f}) = {raw_delta_b:.6f}")
+            # Expected cost score of B = 1 minus expected cost score of A
+            expected_cost_score_of_B = 1.0 - expected_cost_score_of_A
             
-            # Calculate new raw ELO ratings
-            new_raw_elo_a = raw_elo_a + raw_delta_a
-            new_raw_elo_b = raw_elo_b + raw_delta_b
+            logger.info(f"\nExpected scores:")
+            logger.info(f"  Expected raw score of A: {expected_raw_score_of_A:.4f}")
+            logger.info(f"  Expected raw score of B: {expected_raw_score_of_B:.4f}")
+            logger.info(f"  Expected cost score of A: {expected_cost_score_of_A:.4f}")
+            logger.info(f"  Expected cost score of B: {expected_cost_score_of_B:.4f}")
             
-            logger.info(f"\nNew raw ELO ratings:")
-            logger.info(f"  {model_a.name}: {raw_elo_a:.1f} + {raw_delta_a:.1f} = {new_raw_elo_a:.1f}")
-            logger.info(f"  {model_b.name}: {raw_elo_b:.1f} + {raw_delta_b:.1f} = {new_raw_elo_b:.1f}")
+            # ===== ACTUAL SCORES =====
+            # Actual scores from the match
+            actual_raw_score_of_A = raw_score_a
             
-            # ===== COST-ADJUSTED ELO UPDATE =====
-            # Calculate win probability using logistic function
-            cost_expect_a = 1 / (1 + math.pow(10, (cost_elo_b - cost_elo_a) / 400))
-            cost_expect_b = 1 - cost_expect_a
+            # Actual raw score of B = 1 minus actual raw score of A
+            actual_raw_score_of_B = 1.0 - actual_raw_score_of_A
             
-            logger.info(f"\nEQUATION 13: EXPECTED WIN PROBABILITIES (COST-ADJUSTED ELO)")
-            logger.info(f"  E_{model_a.name} = 1 / (1 + 10^(({cost_elo_b:.1f} - {cost_elo_a:.1f})/400)) = {cost_expect_a:.6f}")
-            logger.info(f"  E_{model_b.name} = 1 - E_{model_a.name} = {cost_expect_b:.6f}")
+            # Actual cost-adjusted scores 
+            actual_cost_adjusted_score_of_A = adj_score_a
             
-            # Calculate ELO updates using adjusted scores
-            cost_delta_a = K * (adj_score_a - cost_expect_a)
-            cost_delta_b = K * (adj_score_b - cost_expect_b)
+            # Actual cost-adjusted score of B = 1 minus actual cost-adjusted score of A
+            actual_cost_adjusted_score_of_B = 1.0 - actual_cost_adjusted_score_of_A
             
-            logger.info(f"\nEQUATION 14-15: ELO UPDATES (COST-ADJUSTED)")
-            logger.info(f"  ΔR_{model_a.name} = {K} * ({adj_score_a:.6f} - {cost_expect_a:.6f}) = {cost_delta_a:.6f}")
-            logger.info(f"  ΔR_{model_b.name} = {K} * ({adj_score_b:.6f} - {cost_expect_b:.6f}) = {cost_delta_b:.6f}")
+            logger.info(f"\nActual scores from the match:")
+            logger.info(f"  Actual raw score of A: {actual_raw_score_of_A:.4f}")
+            logger.info(f"  Actual raw score of B: {actual_raw_score_of_B:.4f}")
+            logger.info(f"  Actual cost-adjusted score of A: {actual_cost_adjusted_score_of_A:.4f}")
+            logger.info(f"  Actual cost-adjusted score of B: {actual_cost_adjusted_score_of_B:.4f}")
             
-            # Calculate new cost-adjusted ELO ratings
-            new_cost_elo_a = cost_elo_a + cost_delta_a
-            new_cost_elo_b = cost_elo_b + cost_delta_b
+            # ===== RATING UPDATES =====
+            # New raw rating of A = old raw rating of A plus K times (actual raw score of A minus expected raw score of A)
+            new_raw_rating_of_A = old_raw_rating_of_A + K * (actual_raw_score_of_A - expected_raw_score_of_A)
             
-            logger.info(f"\nNew cost-adjusted ELO ratings:")
-            logger.info(f"  {model_a.name}: {cost_elo_a:.1f} + {cost_delta_a:.1f} = {new_cost_elo_a:.1f}")
-            logger.info(f"  {model_b.name}: {cost_elo_b:.1f} + {cost_delta_b:.1f} = {new_cost_elo_b:.1f}")
+            # New cost rating of A = old cost rating of A plus K times (actual cost-adjusted score of A minus expected cost score of A)
+            new_cost_rating_of_A = old_cost_rating_of_A + K * (actual_cost_adjusted_score_of_A - expected_cost_score_of_A)
+            
+            # New raw rating of B = old raw rating of B plus K times (actual raw score of B minus expected raw score of B)
+            new_raw_rating_of_B = old_raw_rating_of_B + K * (actual_raw_score_of_B - expected_raw_score_of_B)
+            
+            # New cost rating of B = old cost rating of B plus K times (actual cost-adjusted score of B minus expected cost score of B)
+            new_cost_rating_of_B = old_cost_rating_of_B + K * (actual_cost_adjusted_score_of_B - expected_cost_score_of_B)
+            
+            # Calculate changes for logging
+            raw_rating_change_of_A = new_raw_rating_of_A - old_raw_rating_of_A
+            raw_rating_change_of_B = new_raw_rating_of_B - old_raw_rating_of_B
+            cost_rating_change_of_A = new_cost_rating_of_A - old_cost_rating_of_A
+            cost_rating_change_of_B = new_cost_rating_of_B - old_cost_rating_of_B
+            
+            logger.info(f"\nRating update calculations:")
+            logger.info(f"  Raw rating change of A: {K} × ({actual_raw_score_of_A:.4f} - {expected_raw_score_of_A:.4f}) = {raw_rating_change_of_A:.1f}")
+            logger.info(f"  Raw rating change of B: {K} × ({actual_raw_score_of_B:.4f} - {expected_raw_score_of_B:.4f}) = {raw_rating_change_of_B:.1f}")
+            logger.info(f"  Cost rating change of A: {K} × ({actual_cost_adjusted_score_of_A:.4f} - {expected_cost_score_of_A:.4f}) = {cost_rating_change_of_A:.1f}")
+            logger.info(f"  Cost rating change of B: {K} × ({actual_cost_adjusted_score_of_B:.4f} - {expected_cost_score_of_B:.4f}) = {cost_rating_change_of_B:.1f}")
+            
+            logger.info(f"\nNew ELO ratings:")
+            logger.info(f"  New raw rating of A ({model_a.name}): {old_raw_rating_of_A:.1f} + {raw_rating_change_of_A:.1f} = {new_raw_rating_of_A:.1f}")
+            logger.info(f"  New raw rating of B ({model_b.name}): {old_raw_rating_of_B:.1f} + {raw_rating_change_of_B:.1f} = {new_raw_rating_of_B:.1f}")
+            logger.info(f"  New cost rating of A ({model_a.name}): {old_cost_rating_of_A:.1f} + {cost_rating_change_of_A:.1f} = {new_cost_rating_of_A:.1f}")
+            logger.info(f"  New cost rating of B ({model_b.name}): {old_cost_rating_of_B:.1f} + {cost_rating_change_of_B:.1f} = {new_cost_rating_of_B:.1f}")
+            
+            # Calculate standard error after this match
+            match_count_a = model_a.performance['total_matches_played'] + 1
+            match_count_b = model_b.performance['total_matches_played'] + 1
+            
+            # Standard error after n matches σ ≈ 400 divided by √n
+            error_a = 400.0 / math.sqrt(match_count_a)
+            error_b = 400.0 / math.sqrt(match_count_b)
+            
+            logger.info(f"\nStatistical confidence:")
+            logger.info(f"  {model_a.name}: After {match_count_a} matches, standard error ≈ {error_a:.1f} points")
+            logger.info(f"  {model_b.name}: After {match_count_b} matches, standard error ≈ {error_b:.1f} points")
+            
+            # Save the new ratings for use later in the code
+            # (Backward compatibility with existing variables)
+            new_raw_elo_a = new_raw_rating_of_A
+            new_raw_elo_b = new_raw_rating_of_B
+            new_cost_elo_a = new_cost_rating_of_A
+            new_cost_elo_b = new_cost_rating_of_B
             
             # ===== SUMMARY OF RESULTS =====
             logger.info(f"\n{'='*30} MATCH RESULTS SUMMARY {'='*30}")
@@ -1305,11 +1341,11 @@ def run_tournament_matches(models: List[LLMModel], max_matches: int = 1, prior_m
             
             # Model A stats
             total_tokens_a = result_a["prompt_tokens"] + result_a["completion_tokens"]
-            logger.table(f"│ {model_a.name:<19} │ {raw_score_a:<10.4f} │ {adj_score_a:<10.4f} │ {total_tokens_a:<10} │ ${cost_a:<7.4f} │ {raw_elo_a:<8.1f} │ {cost_elo_a:<8.1f} │")
+            logger.table(f"│ {model_a.name:<19} │ {raw_score_a:<10.4f} │ {adj_score_a:<10.4f} │ {total_tokens_a:<10} │ ${cost_a:<7.4f} │ {new_raw_elo_a:<8.1f} │ {new_cost_elo_a:<8.1f} │")
             
             # Model B stats  
             total_tokens_b = result_b["prompt_tokens"] + result_b["completion_tokens"]
-            logger.table(f"│ {model_b.name:<19} │ {raw_score_b:<10.4f} │ {adj_score_b:<10.4f} │ {total_tokens_b:<10} │ ${cost_b:<7.4f} │ {raw_elo_b:<8.1f} │ {cost_elo_b:<8.1f} │")
+            logger.table(f"│ {model_b.name:<19} │ {raw_score_b:<10.4f} │ {adj_score_b:<10.4f} │ {total_tokens_b:<10} │ ${cost_b:<7.4f} │ {new_raw_elo_b:<8.1f} │ {new_cost_elo_b:<8.1f} │")
             
             logger.table(bottom_line)
             
@@ -1324,12 +1360,12 @@ def run_tournament_matches(models: List[LLMModel], max_matches: int = 1, prior_m
             logger.table(elo_header)
             logger.table(elo_column)
             logger.table(elo_separator)
-            logger.table(f"│ {model_a.name:<19} │ {raw_delta_a:+10.1f} │ {new_raw_elo_a:<10.1f} │ {cost_delta_a:+10.1f} │ {new_cost_elo_a:<10.1f} │")
-            logger.table(f"│ {model_b.name:<19} │ {raw_delta_b:+10.1f} │ {new_raw_elo_b:<10.1f} │ {cost_delta_b:+10.1f} │ {new_cost_elo_b:<10.1f} │")
+            logger.table(f"│ {model_a.name:<19} │ {raw_rating_change_of_A:+10.1f} │ {new_raw_elo_a:<10.1f} │ {cost_rating_change_of_A:+10.1f} │ {new_cost_elo_a:<10.1f} │")
+            logger.table(f"│ {model_b.name:<19} │ {raw_rating_change_of_B:+10.1f} │ {new_raw_elo_b:<10.1f} │ {cost_rating_change_of_B:+10.1f} │ {new_cost_elo_b:<10.1f} │")
             logger.table(elo_bottom)
             logger.table("")
 
-            # Log standard results with timestamps
+                # Log standard results with timestamps
             logger.info(f"\nRaw scores: {model_a.name} {raw_score_a:.4f} - {raw_score_b:.4f} {model_b.name}")
             logger.info(f"Cost-adj scores: {model_a.name} {adj_score_a:.4f} - {adj_score_b:.4f} {model_b.name}")
             
@@ -1350,10 +1386,10 @@ def run_tournament_matches(models: List[LLMModel], max_matches: int = 1, prior_m
                 logger.info(f"\nRESULT: DRAW")
             
             logger.info(f"\nELO changes:")
-            logger.info(f"  {model_a.name}: Raw: {raw_elo_a:.1f} → {new_raw_elo_a:.1f} ({raw_delta_a:+.1f}), " +
-                        f"Cost-Adj: {cost_elo_a:.1f} → {new_cost_elo_a:.1f} ({cost_delta_a:+.1f})")
-            logger.info(f"  {model_b.name}: Raw: {raw_elo_b:.1f} → {new_raw_elo_b:.1f} ({raw_delta_b:+.1f}), " +
-                        f"Cost-Adj: {cost_elo_b:.1f} → {new_cost_elo_b:.1f} ({cost_delta_b:+.1f})")
+            logger.info(f"  {model_a.name}: Raw: {old_raw_rating_of_A:.1f} → {new_raw_elo_a:.1f} ({raw_rating_change_of_A:+.1f}), " +
+                        f"Cost-Adj: {old_cost_rating_of_A:.1f} → {new_cost_elo_a:.1f} ({cost_rating_change_of_A:+.1f})")
+            logger.info(f"  {model_b.name}: Raw: {old_raw_rating_of_B:.1f} → {new_raw_elo_b:.1f} ({raw_rating_change_of_B:+.1f}), " +
+                        f"Cost-Adj: {old_cost_rating_of_B:.1f} → {new_cost_elo_b:.1f} ({cost_rating_change_of_B:+.1f})")
             logger.info(f"{'='*72}\n")
             
             # Set the new ELO ratings to the model objects
@@ -1405,7 +1441,7 @@ def run_tournament_matches(models: List[LLMModel], max_matches: int = 1, prior_m
             # Log updated match counts
             logger.info("\nUpdated match counts:")
             for name, count in sorted(match_counts.items()):
-                logger.info(f"  {name}: {count}/5 matches played")
+                logger.info(f"  {name}: {count}/20 matches played")
                 
             # Log progress toward target
             models_at_target = sum(1 for count in match_counts.values() if count >= target_matches_per_model)
@@ -1470,7 +1506,7 @@ if __name__ == "__main__":
     all_models = initialize_models(MODELS)
     
     # Run tournament matches
-    max_matches = 1
+    max_matches = 20
     matches = run_tournament_matches(all_models, max_matches)
     
     # Show results
