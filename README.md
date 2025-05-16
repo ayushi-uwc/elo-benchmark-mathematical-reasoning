@@ -4,7 +4,7 @@
 
 UNER (United Nasscom Elo Rating) is an advanced, peer-federated evaluation framework designed to address two critical challenges in assessing large-scale generative AI models: **benchmark overfitting** and **cost-efficiency trade-offs**. Traditional static benchmarks encourage models to game narrow test sets over time, while performance-focused metrics ignore substantial computational, latency, and energy costs at scale. UNER overcomes these limitations by dynamically generating fresh evaluation challenges through a peer-driven process and by maintaining **dual-track Elo ratings**—one for raw capability and another cost-adjusted—to capture both quality and efficiency.
 
-Key innovations in UNER include:
+Key innovations in UNER include:  
 
 - **Dynamic Challenge Generation**: Each cycle begins with top-performing models constructing novel prompts via stratified topic sampling, thwarting overfitting on fixed corpora.
 - **Peer-Federated Judging**: Models themselves act as judges. Votes are weighted by judges’ current Elo ratings to prioritize reliable evaluators.
