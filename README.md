@@ -46,6 +46,7 @@ ANTHROPIC_API_KEY=your_anthropic_key
 GOOGLE_API_KEY=your_google_key
 HUGGINGFACE_API_KEY=your_huggingface_key
 GROQ_API_KEY=your_groq_key
+XAI_API_KEY=your_xai_key_here
 MONGODB_URI=your_mongodb_connection_string
 ```
 
