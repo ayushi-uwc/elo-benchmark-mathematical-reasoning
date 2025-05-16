@@ -1,14 +1,14 @@
 # ELO Benchmark
 
-A tournament-based framework for benchmarking Large Language Models (LLMs) using an ELO rating system.
+A match-based framework for benchmarking Large Language Models (LLMs) using an ELO rating system.
 
 ## Overview
 
-This project implements a robust system for comparing and benchmarking LLMs through tournament-style matches. Models compete against each other in clinical reasoning tasks, with peer models acting as judges. The system uses an ELO rating system with both raw and cost-adjusted scores to evaluate model performance.
+This project implements a robust system for comparing and benchmarking LLMs through pairwise matches. Models compete against each other in clinical reasoning tasks, with peer models acting as judges. The system uses an ELO rating system with both raw and cost-adjusted scores to evaluate model performance.
 
 ## Key Features
 
-- **Tournament Structure**: Models play matches against opponents of similar ELO ratings
+- **Match-Based Evaluation**: Models play matches against opponents of similar ELO ratings
 - **Federated Judgment**: Peer models evaluate responses with votes weighted by judge ELO
 - **Dual ELO Ratings**: Track both raw performance and cost-adjusted efficiency
 - **Standardized Judging**: Judges must provide verdicts in a specific format
@@ -52,7 +52,7 @@ MONGODB_URI=your_mongodb_connection_string
 
 ## Usage
 
-### Running a Tournament
+### Running Matches
 
 ```bash
 python main.py
@@ -64,7 +64,7 @@ python main.py
 --max-matches    Maximum total number of matches to run
 --batch-size     Number of matches per batch for status updates
 --stats          Show detailed model statistics
---stats-only     Only show statistics, don't run tournament
+--stats-only     Only show statistics, don't run matches
 --log-level      Set logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
 --install-deps   Check and install dependencies
 ```
@@ -77,7 +77,7 @@ python main.py --batch-size 10 --stats
 
 ## How It Works
 
-### Tournament Structure
+### Match Structure
 
 1. **Model Pairing**: Models are paired with opponents of similar ELO ratings
 2. **Case Generation**: A top-performing model generates a clinical case
@@ -103,7 +103,7 @@ python main.py --batch-size 10 --stats
 ## Project Structure
 
 - `main.py` - Main entry point
-- `tournament.py` - Tournament management logic
+- `tournament.py` - Match management logic
 - `models.py` - LLM model implementation
 - `matches.py` - Match logic and prompt templates
 - `database.py` - MongoDB interaction
