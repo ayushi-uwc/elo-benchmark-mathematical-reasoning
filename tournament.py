@@ -938,14 +938,7 @@ def run_tournament_matches(models: List[LLMModel], max_matches: int = 20, prior_
             # If all judges provided invalid verdicts, we can't proceed
             if len(valid_judge_results) == 0:
                 logger.error("No valid judge verdicts found! Cannot determine match outcome.")
-                logger.error("Assigning random outcome as fallback.")
-                random_outcome = random.choice(["a", "b", "draw"])
-                if random_outcome == "a":
-                    judge_votes = {model_a.model_id: 1, model_b.model_id: 0}
-                elif random_outcome == "b":
-                    judge_votes = {model_a.model_id: 0, model_b.model_id: 1}
-                else:
-                    judge_votes = {model_a.model_id: 0.5, model_b.model_id: 0.5}
+                return None, None  # Return no result if no valid verdicts
             else:
                 # Process valid judge results only
                 judge_votes = {}

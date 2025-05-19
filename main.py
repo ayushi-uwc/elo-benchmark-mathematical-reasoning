@@ -30,15 +30,11 @@ try:
 except:
     pass
 
-logger.info("*** IMPORTANT: USING STRICT VERDICT FORMATTING ***")
-logger.info("Judges must provide verdicts in the exact format: 'VERDICT: Model {A|B} is superior' or 'VERDICT: This is a tie'")
-logger.info("Invalid verdicts will result in judge disqualification and a 10-point ELO penalty")
-
 def print_header():
     """Print application header."""
-    header = "\n" + "="*70 + "\n" + " "*25 + "LLM TOURNAMENT SYSTEM" + "\n" + "="*70 + "\n"
+    header = "\n" + "="*70 + "\n" + " "*25 + "LLM ELO MATCH" + "\n" + "="*70 + "\n"
     print(header)
-    logger.info("Starting LLM Tournament System")
+    logger.info("Starting LLM ELO MATCH")
     return header
 
 def print_model_stats(models: List[LLMModel], detailed: bool = False):
