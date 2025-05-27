@@ -104,66 +104,52 @@ All tournament data is logged to an immutable database with complete audit trail
 For a match between models A and B, the expected scores are calculated using the standard Elo formula:
 
 **Raw Performance Expected Score:**
-\[
-E^{raw}_A = \frac{1}{1 + 10^{(R^{raw}_B - R^{raw}_A) / 400}}
-\]
+$$E^{raw}_A = \frac{1}{1 + 10^{(R^{raw}_B - R^{raw}_A) / 400}}$$
 
 **Cost-Adjusted Expected Score:**
-\[
-E^{cost}_A = \frac{1}{1 + 10^{(R^{cost}_B - R^{cost}_A) / 400}}
-\]
+$$E^{cost}_A = \frac{1}{1 + 10^{(R^{cost}_B - R^{cost}_A) / 400}}$$
 
-Where \(R^{raw}\) and \(R^{cost}\) represent the raw and cost-adjusted Elo ratings respectively.
+Where $R^{raw}$ and $R^{cost}$ represent the raw and cost-adjusted Elo ratings respectively.
 
 #### Judge Vote Weighting
 
 Judge votes are weighted using softmax over raw Elo ratings to prioritize reliable evaluators:
 
-\[
-w_k = \frac{e^{R_k^{raw} / \tau}}{\sum_{j=1}^{J} e^{R_j^{raw} / \tau}}
-\]
+$$w_k = \frac{e^{R_k^{raw} / \tau}}{\sum_{j=1}^{J} e^{R_j^{raw} / \tau}}$$
 
 Where:
-- \(w_k\) = weight for judge k
-- \(R_k^{raw}\) = raw Elo rating of judge k  
-- \(\tau = 300\) = temperature parameter controlling weight concentration
-- \(J\) = total number of judges
+- $w_k$ = weight for judge k
+- $R_k^{raw}$ = raw Elo rating of judge k  
+- $\tau = 300$ = temperature parameter controlling weight concentration
+- $J$ = total number of judges
 
 #### Raw Score Calculation
 
 The raw score for model A is computed as the weighted average of judge votes:
 
-\[
-S_A^{raw} = \frac{\sum_{k=1}^{J} w_k \times v_{k,A}}{\sum_{k=1}^{J} w_k}
-\]
+$$S_A^{raw} = \frac{\sum_{k=1}^{J} w_k \times v_{k,A}}{\sum_{k=1}^{J} w_k}$$
 
-Where \(v_{k,A} \in \{0, 0.5, 1\}\) represents judge k's vote for model A (loss, tie, win).
+Where $v_{k,A} \in \{0, 0.5, 1\}$ represents judge k's vote for model A (loss, tie, win).
 
 #### Cost-Adjusted Score
 
 The cost-adjusted score incorporates computational efficiency:
 
-\[
-S_A^{adj} = S_A^{raw} - \tau_c \times \frac{C_A}{C_A + C_B}
-\]
+$$S_A^{adj} = S_A^{raw} - \tau_c \times \frac{C_A}{C_A + C_B}$$
 
 Where:
-- \(C_A, C_B\) = computational costs for models A and B
-- \(\tau_c = 0.05\) = cost sensitivity parameter
+- $C_A, C_B$ = computational costs for models A and B
+- $\tau_c = 0.05$ = cost sensitivity parameter
 
 #### Elo Rating Updates
 
 Ratings are updated using the standard Elo formula with K-factor = 32:
 
 **Raw Elo Update:**
-\[
-R^{raw}_A \leftarrow R^{raw}_A + K \times (S_A^{raw} - E^{raw}_A)
-\]
+$$R^{raw}_A \leftarrow R^{raw}_A + K \times (S_A^{raw} - E^{raw}_A)$$
 
 **Cost-Adjusted Elo Update:**
-\[
-R^{cost}_A \leftarrow R^{cost}_A + K \times (S_A^{adj} - E^{cost}_A)
-\]
+$$R^{cost}_A \leftarrow R^{cost}_A + K \times (S_A^{adj} - E^{cost}_A)$$
 
 ### Rating Convergence Properties
 
@@ -176,7 +162,7 @@ The system exhibits several desirable mathematical properties:
 
 ### Statistical Validation
 
-**Rating Uncertainty**: Standard error decreases as \(\sigma \approx 400/\sqrt{n}\) where n is the number of matches played.
+**Rating Uncertainty**: Standard error decreases as $\sigma \approx 400/\sqrt{n}$ where n is the number of matches played.
 
 **Judge Reliability**: Inter-judge agreement correlates with judge Elo rating (Pearson r = 0.73, p < 0.001).
 
