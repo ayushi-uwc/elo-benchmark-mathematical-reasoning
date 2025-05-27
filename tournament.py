@@ -17,6 +17,7 @@ from matches import (
 from model_definitions import MODEL_CAPS
 from database import db
 from logger_config import get_logger
+from leaderboard import print_detailed_leaderboard
 
 # Define the verdict pattern constant
 VALID_VERDICT_PATTERN = r"VERDICT:\s*(Response\s*A\s*is\s*superior|Response\s*B\s*is\s*superior|This\s*is\s*a\s*tie)"
@@ -52,10 +53,14 @@ def get_nested_attr(obj, attr_path):
             obj = getattr(obj, attr)
     return obj
 
-def inverse_weighted_choice(models, match_count_key="performance.total_matches_played", max_matches=20):
+def inverse_weighted_choice(models, match_count_key="performance.total_matches_played", max_matches=50):
     """
     Select one model from a list with inverse match-count weighting,
     excluding models with >= max_matches.
+    
+    Equation 1: w_i = 1/(1+n_i) where n_i is number of matches for model i
+    Equation 2: P(m_i) = w_i / sum(w_j) for all j
+                       = (1/(1+n_i)) / sum(1/(1+n_j)) for all j
     """
     logger.info(f"\n{'#'*20} INVERSE WEIGHTED SELECTION {'#'*20}")
     logger.info(f"Running inverse_weighted_choice with {len(models)} models")
@@ -88,48 +93,44 @@ def inverse_weighted_choice(models, match_count_key="performance.total_matches_p
     logger.info("\nCALCULATING INVERSE MATCH-COUNT WEIGHTS (Equation 1):")
     logger.info("w_i = 1/(1+n_i) where n_i = number of matches for model m_i")
     
-    # Calculate weights
-    model_weights = []
+    # Calculate weights for each model
+    weights = []
+    match_counts = []
     for m in eligible:
         match_count = get_nested_attr(m, match_count_key)
-        weight = 1 / (1 + match_count)
-        model_weights.append((m, match_count, weight))
+        weight = 1.0 / (1.0 + match_count)  # Equation 1
+        weights.append(weight)
+        match_counts.append(match_count)
+        logger.info(f"  {m.name}: matches={match_count}, w_{m.name} = 1/(1+{match_count}) = {weight:.6f}")
     
-    # Sort by weight for clearer display
-    model_weights.sort(key=lambda x: -x[2])  # Sort by weight descending
+    # Calculate sum of all weights for normalization
+    total_weight = sum(weights)
+    logger.info(f"\nSum of all weights: Σ(1/(1+n_j)) = {total_weight:.6f}")
     
-    # Display all weights
-    for m, matches, weight in model_weights:
-        logger.info(f"  {m.name}: matches={matches}, w_{m.name} = 1/(1+{matches}) = {weight:.6f}")
-    
-    # Calculate probabilities
-    models_only = [m for m, _, _ in model_weights]
-    weights_only = [w for _, _, w in model_weights]
-    total_weight = sum(weights_only)
-    
-    logger.info(f"\nTotal weight (sum of all weights): {total_weight:.6f}")
-    
+    # Calculate probabilities (Equation 2)
     logger.info("\nCALCULATING SELECTION PROBABILITIES (Equation 2):")
-    logger.info("P(m_i) = w_i / Σ_j w_j")
+    logger.info("P(m_i) = (1/(1+n_i)) / Σ(1/(1+n_j)) for all j")
     
-    probs = [w / total_weight for w in weights_only]
+    probabilities = []
+    for i, (m, weight, matches) in enumerate(zip(eligible, weights, match_counts)):
+        prob = weight / total_weight
+        probabilities.append(prob)
+        logger.info(f"  P({m.name}) = (1/{1+matches}) / {total_weight:.6f} = {prob:.6f} ({prob*100:.2f}%)")
     
-    for i, (m, matches, weight) in enumerate(zip(models_only, weights_only, probs)):
-        prob = probs[i]
-        logger.info(f"  P({m.name}) = {weight:.6f}/{total_weight:.6f} = {prob:.6f} ({prob*100:.2f}%)")
-    
-    # Make random selection based on weights
+    # Make random selection based on calculated probabilities
     logger.info("\nMAKING CATEGORICAL RANDOM SELECTION (Equation 3):")
     logger.info("m ~ Categorical(P(m_1), P(m_2), ..., P(m_N))")
     
-    selected = random.choices(models_only, weights=weights_only, k=1)[0]
+    selected = random.choices(eligible, weights=probabilities, k=1)[0]
+    selected_idx = eligible.index(selected)
     
-    logger.info(f"Selected model: {selected.name} (probability: {probs[models_only.index(selected)]:.6f})")
+    logger.info(f"Selected model: {selected.name}")
+    logger.info(f"Selection probability: {probabilities[selected_idx]:.6f} ({probabilities[selected_idx]*100:.2f}%)")
     logger.info(f"{'#'*60}\n")
     
     return selected
 
-def select_pair(models, initial_delta=50, delta_step=25, max_delta=400, max_matches=20,
+def select_pair(models, initial_delta=50, delta_step=25, max_delta=400, max_matches=50,
                 elo_key="elo.cost_adjusted.current", match_count_key="performance.total_matches_played", 
                 prior_matches=None):
     """
@@ -240,38 +241,37 @@ def select_pair(models, initial_delta=50, delta_step=25, max_delta=400, max_matc
             logger.info("\nSelecting Player 2 from stratum using inverse match-count weighting")
             logger.info("Following Equations 5-7:")
             logger.info("  Equation 5: w_j = 1/(1+n_j) for each m_j in stratum")
-            logger.info("  Equation 6: P(m_j|S_Δ) = w_j / Σ_{k∈S_Δ(m_A)} w_k")
+            logger.info("  Equation 6: P(m_j|S_Δ) = (1/(1+n_j)) / Σ(1/(1+n_k)) for all k in stratum")
             logger.info("  Equation 7: m_B ~ Categorical(P(m_j|S_Δ))_{j∈S_Δ(m_A)}")
             
             # Calculate weights based on inverse match count (Equation 5)
             weights = []
-            models_in_stratum = []
             match_counts = []
             
             logger.info("\nInverse match-count weights within stratum:")
             for m in stratum:
                 match_count = get_nested_attr(m, match_count_key)
-                weight = 1.0 / (1.0 + match_count)
-                
-                models_in_stratum.append(m)
-                match_counts.append(match_count)
+                weight = 1.0 / (1.0 + match_count)  # Equation 5
                 weights.append(weight)
-                
+                match_counts.append(match_count)
                 logger.info(f"  {m.name}: matches={match_count}, w_{m.name} = 1/(1+{match_count}) = {weight:.6f}")
             
-            # Calculate normalized probabilities (Equation 6)
+            # Calculate sum of weights for normalization
             total_weight = sum(weights)
-            probs = [w / total_weight for w in weights]
+            logger.info(f"\nSum of all weights: Σ(1/(1+n_k)) = {total_weight:.6f}")
             
-            logger.info(f"\nTotal stratum weight: {total_weight:.6f}")
-            logger.info("\nNormalized selection probabilities:")
-            
-            for i, (m, w, p) in enumerate(zip(models_in_stratum, weights, probs)):
-                logger.info(f"  P({m.name}|S_{current_delta}) = {w:.6f}/{total_weight:.6f} = {p:.6f} ({p*100:.2f}%)")
+            # Calculate probabilities (Equation 6)
+            logger.info("\nCalculating selection probabilities:")
+            probabilities = []
+            for i, (m, weight, matches) in enumerate(zip(stratum, weights, match_counts)):
+                prob = weight / total_weight
+                probabilities.append(prob)
+                logger.info(f"  P({m.name}|S_{current_delta}) = (1/{1+matches}) / {total_weight:.6f} = {prob:.6f} ({prob*100:.2f}%)")
             
             # Equation 7: Sample Player 2 from categorical distribution
             logger.info("\nMaking categorical random selection for Player 2:")
-            player_2 = random.choices(models_in_stratum, weights=probs, k=1)[0]
+            player_2 = random.choices(stratum, weights=probabilities, k=1)[0]
+            selected_idx = stratum.index(player_2)
             
             p2_elo = get_nested_attr(player_2, elo_key)
             p2_matches = get_nested_attr(player_2, match_count_key)
@@ -281,7 +281,7 @@ def select_pair(models, initial_delta=50, delta_step=25, max_delta=400, max_matc
             logger.info(f"  ELO: {p2_elo:.1f}")
             logger.info(f"  ELO difference with Player 1: {elo_diff:.1f}")
             logger.info(f"  Matches played: {p2_matches}")
-            logger.info(f"  Selection probability: {probs[models_in_stratum.index(player_2)]:.6f}")
+            logger.info(f"  Selection probability: {probabilities[selected_idx]:.6f} ({probabilities[selected_idx]*100:.2f}%)")
             
             logger.info(f"\nFINAL PAIRING: {player_1.name} vs {player_2.name}")
             logger.info(f"{'='*68}\n")
@@ -599,7 +599,7 @@ def run_async_tasks(tasks):
     finally:
         loop.close()
 
-def run_tournament_matches(models: List[LLMModel], max_matches: int = 20, prior_matches: Optional[Set[Tuple[str, str]]] = None) -> List[Match]:
+def run_tournament_matches(models: List[LLMModel], max_matches: int = 50, prior_matches: Optional[Set[Tuple[str, str]]] = None) -> List[Match]:
     """
     Run tournament matches until each model plays exactly 1 match.
     
@@ -687,10 +687,10 @@ def run_tournament_matches(models: List[LLMModel], max_matches: int = 20, prior_
     match_counts = {model.name: model.performance['total_matches_played'] for model in models}
     logger.info("\nCurrent match counts:")
     for name, count in match_counts.items():
-        logger.info(f"  {name}: {count}/20 matches played")
+        logger.info(f"  {name}: {count}/50 matches played")
     
     # Define target match count per model
-    target_matches_per_model = 20
+    target_matches_per_model = 50
     
     # Collect the matches for this tournament
     matches = []
@@ -727,8 +727,8 @@ def run_tournament_matches(models: List[LLMModel], max_matches: int = 20, prior_
             # Try again with increased delta
             model_a, model_b = select_pair(
                 eligible_models,
-                initial_delta=100,
-                max_delta=800,
+                initial_delta=50,
+                max_delta=400,
                 prior_matches=prior_matches
             )
             
@@ -1018,7 +1018,10 @@ def run_tournament_matches(models: List[LLMModel], max_matches: int = 20, prior_
                 logger.info(f"Match: {model_a.name} vs {model_b.name}")
 
             # Calculate judge weights using softmax (Equation 8)
-            judge_elos = [j.elo["raw"]["current"] for j in judges]
+            # Only use valid judges for weight calculation
+            valid_judges = [j["judge_id"] for j in match.judgment["judges"]]
+            judges_for_weights = [j for j in judges if j.model_id in valid_judges]
+            judge_elos = [j.elo["raw"]["current"] for j in judges_for_weights]
             temperature = 300  # softmax temperature from paper τ
             
             # Show the numerator calculations
@@ -1026,7 +1029,7 @@ def run_tournament_matches(models: List[LLMModel], max_matches: int = 20, prior_
             logger.info(f"w_k = e^(R_k^raw/τ) / Σ_j=1^J e^(R_j^raw/τ) with τ = {temperature}")
             logger.info("\nNumerator calculations for each judge (e^(R_k^raw/τ)):")
             numerators = []
-            for i, (judge, elo) in enumerate(zip(judges, judge_elos)):
+            for i, (judge, elo) in enumerate(zip(judges_for_weights, judge_elos)):
                 numerator = math.exp(elo / temperature)
                 numerators.append(numerator)
                 logger.info(f"  {judge.name}: e^({elo:.1f}/{temperature}) = {numerator:.6f}")
@@ -1038,7 +1041,7 @@ def run_tournament_matches(models: List[LLMModel], max_matches: int = 20, prior_
             # Calculate the final weights (numerator / denominator)
             normalized_weights = []
             logger.info("\nFinal normalized weights:")
-            for i, (judge, num) in enumerate(zip(judges, numerators)):
+            for i, (judge, num) in enumerate(zip(judges_for_weights, numerators)):
                 weight = num / denominator
                 normalized_weights.append(weight)
                 logger.info(f"  {judge.name}: {num:.6f}/{denominator:.6f} = {weight:.6f} ({weight*100:.2f}%)")
@@ -1070,9 +1073,15 @@ def run_tournament_matches(models: List[LLMModel], max_matches: int = 20, prior_
             vote_info = []
             
             # Process each judge's vote and calculate weighted contribution
-            for i, (judge, weight) in enumerate(zip(judges, normalized_weights)):
-                vote = match.judgment["judges"][i]["vote"]
-                vote_type = match.judgment["judges"][i]["vote_type"]
+            for i, (judge, weight) in enumerate(zip(judges_for_weights, normalized_weights)):
+                # Find matching judge entry
+                judge_entry = next((j for j in match.judgment["judges"] if j["judge_id"] == judge.model_id), None)
+                if not judge_entry:
+                    logger.error(f"Could not find judge entry for {judge.name}")
+                    continue
+                    
+                vote = judge_entry["vote"]
+                vote_type = judge_entry["vote_type"]
                 
                 if vote_type == "win":
                     if vote == model_a.model_id:
@@ -1398,19 +1407,39 @@ def run_tournament_matches(models: List[LLMModel], max_matches: int = 20, prior_
             # Update model A stats
             model_a.performance["total_matches_played"] += 1
             model_a.match_ids["played"].append(match.match_id)
-            if match_result_a == "win":
-                model_a.performance["wins_raw"] += 1
-            elif match_result_a == "loss":
-                model_a.performance["losses_raw"] += 1
-                
+            
             # Update model B stats
             model_b.performance["total_matches_played"] += 1
             model_b.match_ids["played"].append(match.match_id)
-            if match_result_b == "win":
-                model_b.performance["wins_raw"] += 1
-            elif match_result_b == "loss":
-                model_b.performance["losses_raw"] += 1
+
+            # Update judge vote statistics - count individual judge votes
+            for judge_result in valid_judge_results:
+                vote = judge_result["vote"]
+                vote_type = judge_result["vote_type"]
                 
+                if vote_type == "win":
+                    if vote == model_a.model_id:
+                        model_a.performance["wins_raw"] += 1
+                        model_b.performance["losses_raw"] += 1
+                    else:  # vote for model B
+                        model_b.performance["wins_raw"] += 1
+                        model_a.performance["losses_raw"] += 1
+                elif vote_type == "draw":
+                    model_a.performance["draws_raw"] += 1
+                    model_b.performance["draws_raw"] += 1
+
+            # Update score history and averages
+            model_a.performance["score_history"]["raw_scores"].append(raw_score_a)
+            model_a.performance["score_history"]["adjusted_scores"].append(adj_score_a)
+            model_b.performance["score_history"]["raw_scores"].append(raw_score_b)
+            model_b.performance["score_history"]["adjusted_scores"].append(adj_score_b)
+
+            # Calculate new averages
+            model_a.performance["score_history"]["avg_raw_score"] = sum(model_a.performance["score_history"]["raw_scores"]) / len(model_a.performance["score_history"]["raw_scores"])
+            model_a.performance["score_history"]["avg_adjusted_score"] = sum(model_a.performance["score_history"]["adjusted_scores"]) / len(model_a.performance["score_history"]["adjusted_scores"])
+            model_b.performance["score_history"]["avg_raw_score"] = sum(model_b.performance["score_history"]["raw_scores"]) / len(model_b.performance["score_history"]["raw_scores"])
+            model_b.performance["score_history"]["avg_adjusted_score"] = sum(model_b.performance["score_history"]["adjusted_scores"]) / len(model_b.performance["score_history"]["adjusted_scores"])
+
             # Save updated models to database
             model_a.save_to_db()
             model_b.save_to_db()
@@ -1431,10 +1460,14 @@ def run_tournament_matches(models: List[LLMModel], max_matches: int = 20, prior_
             logger.info(f"Match complete: {model_a.name} vs {model_b.name}")
             logger.info(f"Updated ELO: {model_a.name}: {model_a.elo['raw']['current']:.1f}, {model_b.name}: {model_b.elo['raw']['current']:.1f}")
             
+            # Display updated leaderboard after each match
+            print("\nUpdated Leaderboard after match:")
+            print_detailed_leaderboard(models)
+            
             # Log updated match counts
             logger.info("\nUpdated match counts:")
             for name, count in sorted(match_counts.items()):
-                logger.info(f"  {name}: {count}/20 matches played")
+                logger.info(f"  {name}: {count}/50 matches played")
                 
             # Log progress toward target
             models_at_target = sum(1 for count in match_counts.values() if count >= target_matches_per_model)
@@ -1499,7 +1532,7 @@ if __name__ == "__main__":
     all_models = initialize_models(MODELS)
     
     # Run tournament matches
-    max_matches = 20
+    max_matches = 50
     matches = run_tournament_matches(all_models, max_matches)
     
     # Show results

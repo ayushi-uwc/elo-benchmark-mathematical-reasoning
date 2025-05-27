@@ -27,10 +27,10 @@ MONGODB_URI = os.getenv("MONGODB_URI")
 
 # Tournament settings
 SWISS_DELTA = 100  # maximum Elo difference allowed in a pair
-JUDGE_COUNT = 3    # number of judge models
+JUDGE_COUNT = 5    # number of judge models
 ELO_TEMP = 300     # Softmax temperature for vote weighting
 K_FACTOR = 16      # ELO K-factor for rating updates
-MAX_MATCHES = 20   # Default max matches for tournament batch
+MAX_MATCHES = 50   # Default max matches for tournament batch
 
 # Database configuration
 DB_NAME = "llm_tournament"

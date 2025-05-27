@@ -389,22 +389,23 @@ MODELS = [
     "input_cost_per_million": 0.25,
     "output_cost_per_million": 0.25,
     "pricing_source": "Galaxy.ai model pricing page, May 2025 - updated 5/19/2025"
-  },
-  {
-    "name": "Deepseek V3",
-    "model_id": "together_ai/deepseek-ai/DeepSeek-V3",
-    "provider": "together_ai",
-    "input_cost_per_million": 1.25,
-    "output_cost_per_million": 7.00,
-    "pricing_source": "Groq pricing page, May 2025 - updated 5/19/2025"
-  },
-  {
-    "name": "Mistral 7B Instruct",
-    "model_id": "together_ai/mistralai/Mistral-7B-Instruct-v0.3",
-    "provider": "together_ai",
-    "input_cost_per_million": 0.25,
-    "output_cost_per_million": 0.25,
-    "pricing_source": "Groq pricing page, May 2025 - updated 5/19/2025"
+  # },
+  # {
+  #   "name": "Deepseek V3",
+  #   "model_id": "together_ai/deepseek-ai/DeepSeek-V3",
+  #   "provider": "together_ai",
+  #   "input_cost_per_million": 1.25,
+  #   "output_cost_per_million": 7.00,
+  #   "pricing_source": "Groq pricing page, May 2025 - updated 5/19/2025"
+  # },
+  # {
+  #   "name": "Mistral 7B Instruct",
+  #   "model_id": "together_ai/mistralai/Mistral-7B-Instruct-v0.3",
+  #   "provider": "together_ai",
+  #   "input_cost_per_million": 0.25,
+  #   "output_cost_per_million": 0.25,
+  #   "pricing_source": "Groq pricing page, May 2025 - updated 5/19/2025"
+  # }
   }
 ]
 
@@ -412,7 +413,7 @@ MODELS = [
 # Additional model configurations can be added here if needed 
 
 MODEL_CAPS = {
-    "max_matches_per_model": 20,      # Maximum matches a model can play in total
+    "max_matches_per_model": 50,      # Maximum matches a model can play in total
 }
 
 # For backward compatibility with code that expects cost_per_million

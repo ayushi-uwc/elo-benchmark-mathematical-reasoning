@@ -32,7 +32,7 @@ class LLMModel:
         pricing_source: str,
         input_cost_per_million: float,
         output_cost_per_million: float,
-        max_matches: int = 20,
+        max_matches: int = 50,
         api_key: Optional[str] = None,
         initialize_new: bool = True
     ):
@@ -64,17 +64,22 @@ class LLMModel:
                 }
             }
 
-            # Performance metrics
+            # Performance metrics with properly initialized nested structures
             self.performance = {
                 "total_matches_played": 0,
-                "wins_raw": 0,
-                "losses_raw": 0,
-                "wins_adjusted": 0,
-                "losses_adjusted": 0,
+                "wins_raw": 0,  # Individual judge votes for win
+                "losses_raw": 0,  # Individual judge votes for loss
+                "draws_raw": 0,  # Individual judge votes for draw
                 "total_tokens_used": 0,
                 "total_input_tokens": 0,
                 "total_output_tokens": 0,
-                "total_cost_usd": 0.0
+                "total_cost_usd": 0.0,
+                "score_history": {
+                    "raw_scores": [],
+                    "adjusted_scores": [],
+                    "avg_raw_score": 0.0,
+                    "avg_adjusted_score": 0.0
+                }
             }
 
             # Match tracking
@@ -219,7 +224,7 @@ class LLMModel:
             provider=data["provider"],
             input_cost_per_million=input_cost,
             output_cost_per_million=output_cost,
-            max_matches=data.get("max_matches", 20),
+            max_matches=data.get("max_matches", 50),
             pricing_source=data.get("pricing_source", ""),
             api_key=data.get("api_key"),
             initialize_new=False  # Don't initialize new values
@@ -231,17 +236,45 @@ class LLMModel:
             "cost_adjusted": {"initial": 1500, "current": 1500}
         })
         
-        model.performance = data.get("performance", {
+        # Get performance data with proper defaults for all fields
+        default_performance = {
             "total_matches_played": 0,
             "wins_raw": 0,
             "losses_raw": 0,
             "wins_adjusted": 0,
             "losses_adjusted": 0,
+            "draws_raw": 0,
             "total_tokens_used": 0,
             "total_input_tokens": 0,
             "total_output_tokens": 0,
-            "total_cost_usd": 0.0
-        })
+            "total_cost_usd": 0.0,
+            "judge_votes": {
+                "received_wins": 0,
+                "received_losses": 0,
+                "received_draws": 0,
+                "given_wins": 0,
+                "given_losses": 0,
+                "given_draws": 0
+            },
+            "score_history": {
+                "raw_scores": [],
+                "adjusted_scores": [],
+                "avg_raw_score": 0.0,
+                "avg_adjusted_score": 0.0
+            }
+        }
+        
+        # Update with actual data, maintaining structure
+        performance_data = data.get("performance", {})
+        for key, value in performance_data.items():
+            if key in default_performance:
+                if isinstance(default_performance[key], dict):
+                    # Merge nested dictionaries
+                    default_performance[key].update(value)
+                else:
+                    default_performance[key] = value
+                    
+        model.performance = default_performance
         
         model.match_ids = data.get("match_ids", {
             "played": [],
@@ -252,9 +285,6 @@ class LLMModel:
         
         model.metadata = data.get("metadata", {
             "notes": "",
-            "capacity": {
-                "max_matches": data.get("max_matches", 20),
-            },
             "last_updated": datetime.utcnow().isoformat() + "Z"
         })
                 
@@ -366,7 +396,7 @@ def initialize_models(models_data: List[Dict[str, Any]]):
                 provider=model_info["provider"],
                 input_cost_per_million=model_info.get("input_cost_per_million", model_info.get("cost_per_million", 0)),
                 output_cost_per_million=model_info.get("output_cost_per_million", model_info.get("cost_per_million", 0)),
-                max_matches=model_info.get("max_matches", 20),
+                max_matches=model_info.get("max_matches", 50),
                 pricing_source=model_info.get("pricing_source", ""),
                 api_key=model_info.get("api_key")
             )
