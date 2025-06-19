@@ -320,6 +320,8 @@ Cross-validation experiments using different random seeds for tournament pairing
 
 The comprehensive evaluation results demonstrate the full spectrum of model performance across our 48-model tournament. The complete leaderboard below presents both raw performance metrics and cost-adjusted rankings, providing a nuanced view of model capabilities and efficiency trade-offs.
 
+Detailed Logs have been uploaded to google drive [logs] (https://drive.google.com/drive/folders/1vZh4me-VpUhWxts7PyF3jnm0NJ-lGL_O?usp=sharing)
+
 ```
 DETAILED LEADERBOARD
 ┌───┬──────────────────────────────┬────────┬────────┬──────────┬──────────┬────────────┬────────┬───────────┬────────┐
