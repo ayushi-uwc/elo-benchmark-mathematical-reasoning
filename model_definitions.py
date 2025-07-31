@@ -70,14 +70,15 @@ MODELS = [
     "output_cost_per_million": 40.00,
     "pricing_source": "OpenAI API pricing page, May 2025 - updated 5/19/2025"
   },
-  {
-    "name": "Claude 3.7 Sonnet",
-    "model_id": "anthropic/claude-3-7-sonnet-20250219",
-    "provider": "anthropic",
-    "input_cost_per_million": 3.00,
-    "output_cost_per_million": 15.00,
-    "pricing_source": "Anthropic API pricing page, May 2025 - updated 5/19/2025"
-  },
+  # COMMENTED OUT - FAILING MODELS FROM HEALTH CHECK
+  # {
+  #   "name": "Claude 3.7 Sonnet",
+  #   "model_id": "anthropic/claude-3-7-sonnet-20250219",
+  #   "provider": "anthropic",
+  #   "input_cost_per_million": 3.00,
+  #   "output_cost_per_million": 15.00,
+  #   "pricing_source": "Anthropic API pricing page, May 2025 - updated 5/19/2025"
+  # },
   {
     "name": "Claude 3.5 Haiku",
     "model_id": "anthropic/claude-3-5-haiku-20241022",
@@ -94,14 +95,14 @@ MODELS = [
     "output_cost_per_million": 15.00,
     "pricing_source": "Anthropic API pricing page, May 2025 - updated 5/19/2025"
   },
-  {
-    "name": "Claude 3 Sonnet",
-    "model_id": "anthropic/claude-3-sonnet-20240229",
-    "provider": "anthropic",
-    "input_cost_per_million": 3.00,
-    "output_cost_per_million": 15.00,
-    "pricing_source": "Anthropic API pricing page, May 2025 - updated 5/19/2025"
-  },
+  # {
+  #   "name": "Claude 3 Sonnet",
+  #   "model_id": "anthropic/claude-3-sonnet-20240229",
+  #   "provider": "anthropic",
+  #   "input_cost_per_million": 3.00,
+  #   "output_cost_per_million": 15.00,
+  #   "pricing_source": "Anthropic API pricing page, May 2025 - updated 5/19/2025"
+  # },
   {
     "name": "Claude 3 Opus",
     "model_id": "anthropic/claude-3-opus-20240229",
@@ -222,22 +223,22 @@ MODELS = [
     "output_cost_per_million": 0.79,
     "pricing_source": "Groq pricing page, May 2025 - updated 5/19/2025"
   },
-  {
-    "name": "Gemini 2.5 Pro",
-    "model_id": "gemini/gemini-2.5-pro-preview-05-06",
-    "provider": "gemini",
-    "input_cost_per_million": 1.25,
-    "output_cost_per_million": 10.00,
-    "pricing_source": "Gemini API pricing page, May 2025 - updated 5/19/2025"
-  },
-  {
-    "name": "Gemini 2.5 Flash",
-    "model_id": "gemini/gemini-2.5-flash-preview-04-17",
-    "provider": "gemini",
-    "input_cost_per_million": 0.15,
-    "output_cost_per_million": 0.60,
-    "pricing_source": "Gemini API pricing page, May 2025 - updated 5/19/2025"
-  },
+  # {
+  #   "name": "Gemini 2.5 Pro",
+  #   "model_id": "gemini/gemini-2.5-pro",
+  #   "provider": "gemini",
+  #   "input_cost_per_million": 1.25,
+  #   "output_cost_per_million": 10.00,
+  #   "pricing_source": "Gemini API pricing page, May 2025 - updated 5/19/2025"
+  # },
+  # {
+  #   "name": "Gemini 2.5 Flash",
+  #   "model_id": "gemini/gemini-2.5-flash-preview-04-17",
+  #   "provider": "gemini",
+  #   "input_cost_per_million": 0.15,
+  #   "output_cost_per_million": 0.60,
+  #   "pricing_source": "Gemini API pricing page, May 2025 - updated 5/19/2025"
+  # },
   {
     "name": "Gemini 2.0 Flash",
     "model_id": "gemini/gemini-2.0-flash",
@@ -254,14 +255,14 @@ MODELS = [
     "output_cost_per_million": 0.30,
     "pricing_source": "Gemini API pricing page, May 2025 - updated 5/19/2025"
   },
-  {
-    "name": "Gemini 1.5 Flash",
-    "model_id": "gemini/gemini-1.5-flash",
-    "provider": "gemini",
-    "input_cost_per_million": 0.075,
-    "output_cost_per_million": 0.40,
-    "pricing_source": "Gemini API pricing page, May 2025 - updated 5/19/2025"
-  },
+  # {
+  #   "name": "Gemini 1.5 Flash",
+  #   "model_id": "gemini/gemini-1.5-flash",
+  #   "provider": "gemini",
+  #   "input_cost_per_million": 0.075,
+  #   "output_cost_per_million": 0.40,
+  #   "pricing_source": "Gemini API pricing page, May 2025 - updated 5/19/2025"
+  # },
   {
     "name": "Gemini 1.5 Flash 8B",
     "model_id": "gemini/gemini-1.5-flash-8b",
@@ -270,14 +271,14 @@ MODELS = [
     "output_cost_per_million": 0.15,
     "pricing_source": "Gemini API pricing page, May 2025 - updated 5/19/2025"
   },
-  {
-    "name": "Gemini 1.5 Pro",
-    "model_id": "gemini/gemini-1.5-pro",
-    "provider": "gemini",
-    "input_cost_per_million": 1.25,
-    "output_cost_per_million": 5.00,
-    "pricing_source": "Gemini API pricing page, May 2025 - updated 5/19/2025"
-  },
+  # {
+  #   "name": "Gemini 1.5 Pro",
+  #   "model_id": "gemini/gemini-1.5-pro",
+  #   "provider": "gemini",
+  #   "input_cost_per_million": 1.25,
+  #   "output_cost_per_million": 5.00,
+  #   "pricing_source": "Gemini API pricing page, May 2025 - updated 5/19/2025"
+  # },
   {
     "name": "Gemma 3 1B",
     "model_id": "gemini/gemma-3-1b-it",
@@ -326,54 +327,38 @@ MODELS = [
     "output_cost_per_million": 0.05,
     "pricing_source": "Hugging Face Inference API pricing, June 2024 - updated 5/19/2025"
   },
-  {
-    "name": "Command A",
-    "model_id": "cohere/command-a-03-2025",
-    "provider": "cohere",
-    "input_cost_per_million": 2.50,
-    "output_cost_per_million": 10.00,
-    "pricing_source": "Cohere API pricing page, May 2025 - updated 5/19/2025"
-  },
-  {
-    "name": "Command R 7B",
-    "model_id": "cohere/command-r7b-12-2024",
-    "provider": "cohere",
-    "input_cost_per_million": 0.0375,
-    "output_cost_per_million": 0.15,
-    "pricing_source": "Cohere API pricing page, May 2025 - updated 5/19/2025"
-  },
-  {
-    "name": "Command R",
-    "model_id": "cohere/command-r",
-    "provider": "cohere",
-    "input_cost_per_million": 0.15,
-    "output_cost_per_million": 0.60,
-    "pricing_source": "Cohere API pricing page, May 2025 - updated 5/19/2025"
-  },
-  {
-    "name": "Command R+",
-    "model_id": "cohere/command-r-plus",
-    "provider": "cohere",
-    "input_cost_per_million": 3.00,
-    "output_cost_per_million": 15.00,
-    "pricing_source": "Cohere API pricing page, May 2025 - updated 5/19/2025"
-  },
-  {
-    "name": "Mixtral 8x7B Instruct",
-    "model_id": "huggingface/mistralai/Mixtral-8x7B-Instruct-v0.1",
-    "provider": "huggingface",
-    "input_cost_per_million": 0.025,
-    "output_cost_per_million": 0.05,
-    "pricing_source": "Hugging Face Inference API pricing, June 2024 - updated 5/19/2025"
-  },
-  {
-    "name": "Microsoft Phi 3.5 Mini Instruct",
-    "model_id": "huggingface/microsoft/Phi-3.5-mini-instruct",
-    "provider": "huggingface",
-    "input_cost_per_million": 0.025,
-    "output_cost_per_million": 0.05,
-    "pricing_source": "Hugging Face Inference API pricing, June 2024 - updated 5/19/2025"
-  },
+  # {
+  #   "name": "Command A",
+  #   "model_id": "cohere/command-a-03-2025",
+  #   "provider": "cohere",
+  #   "input_cost_per_million": 2.50,
+  #   "output_cost_per_million": 10.00,
+  #   "pricing_source": "Cohere API pricing page, May 2025 - updated 5/19/2025"
+  # },
+  # {
+  #   "name": "Command R 7B",
+  #   "model_id": "cohere/command-r7b-12-2024",
+  #   "provider": "cohere",
+  #   "input_cost_per_million": 0.0375,
+  #   "output_cost_per_million": 0.15,
+  #   "pricing_source": "Cohere API pricing page, May 2025 - updated 5/19/2025"
+  # },
+  # {
+  #   "name": "Command R",
+  #   "model_id": "cohere/command-r",
+  #   "provider": "cohere",
+  #   "input_cost_per_million": 0.15,
+  #   "output_cost_per_million": 0.60,
+  #   "pricing_source": "Cohere API pricing page, May 2025 - updated 5/19/2025"
+  # },
+  # {
+  #   "name": "Command R+",
+  #   "model_id": "cohere/command-r-plus",
+  #   "provider": "cohere",
+  #   "input_cost_per_million": 3.00,
+  #   "output_cost_per_million": 15.00,
+  #   "pricing_source": "Cohere API pricing page, May 2025 - updated 5/19/2025"
+  # },
   {
     "name": "Qwen 3 32B",
     "model_id": "huggingface/Qwen/Qwen3-32B",
@@ -382,13 +367,13 @@ MODELS = [
     "output_cost_per_million": 0.05,
     "pricing_source": "Hugging Face Inference API pricing, June 2024 - updated 5/19/2025"
   },
-  {
-    "name": "Mistral Nemo Instruct 2407",
-    "model_id": "huggingface/mistralai/Mistral-Nemo-Instruct-2407",
-    "provider": "huggingface",
-    "input_cost_per_million": 0.25,
-    "output_cost_per_million": 0.25,
-    "pricing_source": "Galaxy.ai model pricing page, May 2025 - updated 5/19/2025"
+  # {
+  #   "name": "Mistral Nemo Instruct 2407",
+  #   "model_id": "huggingface/mistralai/Mistral-Nemo-Instruct-2407",
+  #   "provider": "huggingface",
+  #   "input_cost_per_million": 0.25,
+  #   "output_cost_per_million": 0.25,
+  #   "pricing_source": "Galaxy.ai model pricing page, May 2025 - updated 5/19/2025"
   # },
   # {
   #   "name": "Deepseek V3",
@@ -406,7 +391,6 @@ MODELS = [
   #   "output_cost_per_million": 0.25,
   #   "pricing_source": "Groq pricing page, May 2025 - updated 5/19/2025"
   # }
-  }
 ]
 
 

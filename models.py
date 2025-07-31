@@ -3,6 +3,7 @@ import time
 import json
 import asyncio
 import re  # Add regex import
+import os
 from datetime import datetime
 from typing import Dict, List, Any, Optional
 from config import DB_NAME, MODELS_COLLECTION
@@ -14,6 +15,16 @@ import litellm_config
 # Now import litellm
 from litellm import completion
 import logging
+
+# Import new Google GenAI SDK for Gemini models
+try:
+    from google import genai
+    from google.genai import types
+    HAS_GOOGLE_GENAI = True
+except ImportError:
+    HAS_GOOGLE_GENAI = False
+    logger = logging.getLogger(__name__)
+    logger.warning("google-genai package not installed. Gemini models will use fallback LiteLLM.")
 
 # Import model definitions from separate file
 from model_definitions import MODELS
@@ -97,73 +108,161 @@ class LLMModel:
             }
         
     def generate(self, prompt):
-        """Generate a response using the LLM through litellm."""
+        """Generate a response using the LLM through litellm or native Gemini API."""
         logger.info(f"Generating response with {self.name}")
         start = time.time()
 
         try:
-            # Make the API call with the model configuration
-            response = completion(
-                model=self.model_id,
-                messages=[{"role": "user", "content": prompt}],
-                stream=False
+            # Use native Google GenAI SDK for Gemini models
+            if self.provider == "gemini" and HAS_GOOGLE_GENAI:
+                return self._generate_with_gemini(prompt, start)
+            else:
+                # Use LiteLLM for all other models
+                return self._generate_with_litellm(prompt, start)
+                
+        except Exception as e:
+            logger.error(f"Error generating response for {self.name}: {e}")
+            raise e
+
+    def _generate_with_gemini(self, prompt, start_time):
+        """Generate response using native Google GenAI SDK."""
+        try:
+            # Initialize Gemini client
+            client = genai.Client(
+                api_key=os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY"),
             )
 
-            # Extract metrics
-            model_response = response['choices'][0]['message']['content']
+            # Extract model name from model_id (remove gemini/ prefix if present)
+            model_name = self.model_id.replace("gemini/", "")
             
-            # Filter out any content between XML-style tags <anyword>...</anyword>
-            filtered_response = re.sub(r'<(\w+)>.*?</\1>', '', model_response, flags=re.DOTALL)
+            # Create content structure
+            contents = [
+                types.Content(
+                    role="user",
+                    parts=[
+                        types.Part.from_text(text=prompt),
+                    ],
+                ),
+            ]
             
-            prompt_tokens = response['usage']['prompt_tokens']
-            completion_tokens = response['usage']['completion_tokens']
-            total_tokens = response['usage']['total_tokens']
+            # Generate content
+            response_stream = client.models.generate_content_stream(
+                model=model_name,
+                contents=contents,
+            )
+            
+            # Collect the full response
+            full_response = ""
+            for chunk in response_stream:
+                if chunk.text:
+                    full_response += chunk.text
+            
+            # Filter out any content between XML-style tags
+            filtered_response = re.sub(r'<(\w+)>.*?</\1>', '', full_response, flags=re.DOTALL)
+            
+            # For Gemini, we'll estimate token usage since the new API might not provide exact counts
+            prompt_tokens = len(prompt.split()) * 1.3  # Rough estimation
+            completion_tokens = len(full_response.split()) * 1.3
+            total_tokens = prompt_tokens + completion_tokens
 
             # Calculate cost using separate input/output rates
             input_cost = (prompt_tokens / 1000000) * self.input_cost_per_million
             output_cost = (completion_tokens / 1000000) * self.output_cost_per_million
             total_cost = input_cost + output_cost
 
-            # Update model statistics
+            # Update model statistics (check if performance exists)
+            if hasattr(self, 'performance'):
+                self.performance["total_tokens_used"] += total_tokens
+                self.performance["total_input_tokens"] += prompt_tokens
+                self.performance["total_output_tokens"] += completion_tokens
+                self.performance["total_cost_usd"] += total_cost
+                
+                # Initialize call tracking if missing
+                if "total_calls" not in self.performance:
+                    self.performance["total_calls"] = 0
+                if "total_time" not in self.performance:
+                    self.performance["total_time"] = 0
+                    
+                self.performance["total_calls"] += 1
+
+                # Update timing
+                elapsed = time.time() - start_time
+                self.performance["total_time"] += elapsed
+                self.performance["avg_time_per_call"] = self.performance["total_time"] / self.performance["total_calls"]
+            else:
+                elapsed = time.time() - start_time
+
+            logger.info(f"Generated Gemini response: {len(filtered_response)} chars, {total_tokens} tokens, ${total_cost:.4f}")
+
+            return {
+                "response": filtered_response,
+                "prompt_tokens": int(prompt_tokens),
+                "completion_tokens": int(completion_tokens),
+                "total_tokens": int(total_tokens),
+                "input_cost": input_cost,
+                "output_cost": output_cost,
+                "cost": total_cost,
+                "latency": elapsed * 1000  # Convert to milliseconds to match LiteLLM format
+            }
+            
+        except Exception as e:
+            logger.error(f"Error with Gemini API for {self.name}: {e}")
+            # Fallback to LiteLLM if Gemini fails
+            logger.info(f"Falling back to LiteLLM for {self.name}")
+            return self._generate_with_litellm(prompt, start_time)
+
+    def _generate_with_litellm(self, prompt, start_time):
+        """Generate response using LiteLLM (original implementation)."""
+        # Make the API call with the model configuration
+        response = completion(
+            model=self.model_id,
+            messages=[{"role": "user", "content": prompt}],
+            stream=False
+        )
+
+        # Extract metrics
+        model_response = response['choices'][0]['message']['content']
+        
+        # Filter out any content between XML-style tags <anyword>...</anyword>
+        filtered_response = re.sub(r'<(\w+)>.*?</\1>', '', model_response, flags=re.DOTALL)
+        
+        prompt_tokens = response['usage']['prompt_tokens']
+        completion_tokens = response['usage']['completion_tokens']
+        total_tokens = response['usage']['total_tokens']
+
+        # Calculate cost using separate input/output rates
+        input_cost = (prompt_tokens / 1000000) * self.input_cost_per_million
+        output_cost = (completion_tokens / 1000000) * self.output_cost_per_million
+        total_cost = input_cost + output_cost
+
+        # Update model statistics (check if performance exists)
+        if hasattr(self, 'performance'):
             self.performance["total_tokens_used"] += total_tokens
             self.performance["total_input_tokens"] += prompt_tokens
             self.performance["total_output_tokens"] += completion_tokens
             self.performance["total_cost_usd"] += total_cost
 
-            end = time.time()
-            latency = (end - start) * 1000  # ms
+        end = time.time()
+        latency = (end - start_time) * 1000  # ms
 
-            logger.info(f"Generation complete - Input tokens: {prompt_tokens}, Output tokens: {completion_tokens}")
-            logger.info(f"Costs: Input: ${input_cost:.4f}, Output: ${output_cost:.4f}, Total: ${total_cost:.4f}, Latency: {latency:.2f}ms")
+        logger.info(f"Generation complete - Input tokens: {prompt_tokens}, Output tokens: {completion_tokens}")
+        logger.info(f"Costs: Input: ${input_cost:.4f}, Output: ${output_cost:.4f}, Total: ${total_cost:.4f}, Latency: {latency:.2f}ms")
 
-            # Update metadata
+        # Update metadata (check if metadata exists)
+        if hasattr(self, 'metadata'):
             self.metadata["last_updated"] = datetime.utcnow().isoformat() + "Z"
             self.save_to_db()
 
-            return {
-                "response": filtered_response,  # Return filtered response
-                "prompt_tokens": prompt_tokens,
-                "completion_tokens": completion_tokens,
-                "total_tokens": total_tokens,
-                "input_cost": input_cost,
-                "output_cost": output_cost,
-                "cost": total_cost,
-                "latency": latency
-            }
-
-        except Exception as e:
-            logger.error(f"Error generating with {self.name}: {str(e)}")
-            # Provide a fallback response
-            return {
-                "response": f"[Error occurred with {self.name}]",
-                "prompt_tokens": 0,
-                "completion_tokens": 0,
-                "total_tokens": 0,
-                "input_cost": 0,
-                "output_cost": 0,
-                "cost": 0,
-                "latency": 0
-            }
+        return {
+            "response": filtered_response,  # Return filtered response
+            "prompt_tokens": prompt_tokens,
+            "completion_tokens": completion_tokens,
+            "total_tokens": total_tokens,
+            "input_cost": input_cost,
+            "output_cost": output_cost,
+            "cost": total_cost,
+            "latency": latency
+        }
     
     async def async_generate(self, prompt):
         """Async version of generate method for concurrent processing."""

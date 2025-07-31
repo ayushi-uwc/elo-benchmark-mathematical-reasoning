@@ -33,9 +33,9 @@ K_FACTOR = 16      # ELO K-factor for rating updates
 MAX_MATCHES = 50   # Default max matches for tournament batch
 
 # Database configuration
-DB_NAME = "llm_tournament"
-MODELS_COLLECTION = "models"
-MATCHES_COLLECTION = "matches"
+DB_NAME = "reasoning_tournament"
+MODELS_COLLECTION = "reasoning_models"
+MATCHES_COLLECTION = "reasoning_matches"
 
 # Set environment variables for litellm to use
 os.environ["OPENAI_API_KEY"] = OPENAI_API_KEY

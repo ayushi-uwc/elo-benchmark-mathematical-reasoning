@@ -440,140 +440,142 @@ class Match:
 def generate_case_prompt():
     """Template for prompting case-generation LLM."""
     prompt = (
-        "You are a senior attending physician creating a clinical vignette for medical student evaluation. Your task is to present ONLY the clinical facts as they would appear in a medical record."
+        "You are a distinguished mathematician creating a mathematical reasoning scenario for advanced evaluation. Your task is to present ONLY the mathematical facts and problem setup as they would appear in a rigorous mathematical context."
 
-        "CRITICAL: Present ONLY the raw clinical data. DO NOT include:"
-        "- Any diagnosis or differential diagnosis"
-        "- Clinical reasoning or interpretation"
-        "- Treatment recommendations"
-        "- Questions about the case"
-        "- Explanations of findings"
-        "- Conclusions or assessments"
+        "CRITICAL: Present ONLY the raw mathematical data and problem statement. DO NOT include:"
+        "- Any solutions or solution methods"
+        "- Mathematical analysis or interpretation"
+        "- Step-by-step reasoning"
+        "- Questions about the problem"
+        "- Explanations of mathematical concepts"
+        "- Conclusions or final answers"
 
-        "Format your response as a medical record with these sections:"
-        "Patient Information & Demographics"
-        "Chief Complaint"
-        "History of Present Illness"
-        "Past Medical History"
-        "Medications"
-        "Social History"
-        "Physical Examination"
-        "Laboratory Results"
-        "Imaging Studies"
+        "Format your response as a mathematical problem with these sections:"
+        "Problem Context & Domain"
+        "Given Information"
+        "Mathematical Objects & Definitions"
+        "Constraints & Conditions"
+        "Numerical Data"
+        "Geometric Configuration (if applicable)"
+        "Functional Relationships"
+        "Boundary Conditions"
+        "Measurement Results"
 
         "Requirements:"
-        "- Create a complex case with subtle clinical findings"
-        "- Include competing diagnostic possibilities without stating them"
-        "- Provide comprehensive clinical data without interpretation"
-        "- End immediately after presenting the final test result"
+        "- Create a complex mathematical scenario requiring deep reasoning"
+        "- Include multiple mathematical approaches without stating them"
+        "- Provide comprehensive mathematical data without interpretation"
+        "- End immediately after presenting the final piece of given information"
 
-        "Example format: \"CT chest shows bilateral lower lobe consolidation with air bronchograms.\" NOT \"CT chest shows bilateral pneumonia consistent with...\""
+        "Example format: \"The function f(x) = x³ - 3x² + 2x - 1 is defined on the interval [0, 4] with f'(2) = -1.\" NOT \"The function shows a local extremum indicating...\""
 
-        "STOP writing immediately after presenting all clinical data. Do not add any analysis, questions, or commentary."
+        "STOP writing immediately after presenting all mathematical data. Do not add any analysis, questions, or commentary."
     )
-    logger.info(f"Generated case prompt with updated format")
+    logger.info(f"Generated mathematical reasoning case prompt with updated format")
     logger.info(f"Prompt: '{prompt[:100]}...'")
     return prompt
 
 def generate_question_prompt(case_text: str):
     """Template for prompting question-generation LLM."""
     prompt = (
-        f"Clinical Case:\n{case_text}\n\n"
-        "Based on the above clinical case, your task is to formulate ONE precise, challenging question for a written theoretical evaluation."
+        f"Mathematical Problem:\n{case_text}\n\n"
+        "Based on the above mathematical problem, your task is to formulate ONE precise, challenging question for rigorous mathematical evaluation."
         
         "CRITICAL CONSTRAINTS:"
-        "- Generate ONLY the question - DO NOT provide any answer, explanation, or reasoning"
-        "- This is a written theoretical exam, NOT a practical examination"
-        "- Questions must be answerable through analysis of the provided case data"
-        "- DO NOT ask students to perform physical examinations, procedures, or hands-on activities"
+        "- Generate ONLY the question - DO NOT provide any answer, solution, or reasoning"
+        "- This is a theoretical mathematical evaluation, NOT a computational exercise"
+        "- Questions must be answerable through mathematical analysis of the provided problem data"
+        "- DO NOT ask for lengthy calculations or extensive numerical computations"
         
-        "Question requirements:"
-        "- Focus on cognitive analysis and clinical decision-making"
-        "- Demand synthesis of case data with medical knowledge"
-        "- Have one clear best answer based on evidence-based medicine"
-        "- Test clinical reasoning, not practical skills or procedures"
-        "- Require interpretation of findings already presented in the case"
+        "Question requirements - PRECISE MATHEMATICAL FOCUS:"
+        "- Focus on mathematical reasoning, proof techniques, and analytical thinking"
+        "- Demand synthesis of mathematical concepts with rigorous logical deduction"
+        "- Have one clear mathematically optimal answer based on mathematical principles"
+        "- Test mathematical insight, not computational ability or memorization"
+        "- Require deep understanding of mathematical relationships in the problem"
         
-        "Appropriate question examples:"
-        "- \"What is the most likely diagnosis based on this presentation?\""
-        "- \"What is the next best diagnostic test to order?\""
-        "- \"What is the most appropriate initial treatment?\""
-        "- \"Which finding is most concerning and requires immediate attention?\""
-        "- \"What is the most likely underlying pathophysiology?\""
+        "Appropriate precise mathematical question examples:"
+        "- \"What is the nature of the critical points of this function on the given domain?\""
+        "- \"What mathematical theorem or principle directly applies to solve this problem?\""
+        "- \"What is the optimal mathematical approach to establish the required result?\""
+        "- \"Which mathematical property is most crucial for determining the solution?\""
+        "- \"What is the underlying mathematical structure that governs this problem?\""
+        "- \"What constraint is mathematically most restrictive in this scenario?\""
+        "- \"What mathematical transformation would simplify this problem most effectively?\""
         
         "STOP immediately after writing the question. Do not provide:"
         "- Answer choices (unless specifically creating multiple choice)"
         "- Explanations of the answer"
         "- Reasoning behind the question"
-        "- Additional commentary or teaching points"
+        "- Additional commentary or mathematical insights"
         
-        "Format: Write one clear question ending with a question mark. Then STOP."
+        "Format: Write one clear, mathematically precise question ending with a question mark. Then STOP."
     )
-    logger.info(f"Generated question prompt for case of length {len(case_text)} characters")
-    logger.info(f"Using updated question format focusing on theoretical evaluation")
+    logger.info(f"Generated mathematical reasoning question prompt for problem of length {len(case_text)} characters")
+    logger.info(f"Using updated question format focusing on precise mathematical evaluation")
     return prompt
 
 def generate_answer_prompt(case_text: str, question_text: str):
-    """Template for prompting player models to answer clinical questions."""
+    """Template for prompting player models to answer mathematical reasoning questions."""
     prompt = (
-        f"Clinical Case:\n{case_text}\n\n"
+        f"Mathematical Problem:\n{case_text}\n\n"
         f"Question:\n{question_text}\n\n"
-        "You are an expert clinician providing your best answer to the above clinical question. Demonstrate your clinical reasoning and knowledge to provide the most accurate and appropriate response."
+        "You are an expert mathematician providing your best answer to the above mathematical question. Demonstrate your mathematical reasoning and knowledge to provide the most rigorous and appropriate response."
         
         "Instructions:"
-        "- Answer the question directly and specifically"
-        "- Provide clear clinical reasoning to support your answer"
-        "- Consider relevant differential diagnoses where appropriate"
-        "- Base your response on evidence-based medicine and clinical guidelines"
-        "- Be concise but thorough - avoid unnecessary elaboration"
-        "- If multiple approaches are valid, choose the most evidence-based option"
-        "- Acknowledge uncertainty only when genuinely present in the clinical scenario"
+        "- Answer the question directly and with mathematical precision"
+        "- Provide clear mathematical reasoning to support your answer"
+        "- Consider relevant alternative mathematical approaches where appropriate"
+        "- Base your response on established mathematical principles and theorems"
+        "- Be concise but thorough - avoid unnecessary mathematical elaboration"
+        "- If multiple approaches are valid, choose the most mathematically elegant and rigorous option"
+        "- Acknowledge uncertainty only when genuinely present in the mathematical scenario"
         
         "Format your response:"
         "1. Direct answer to the question"
-        "2. Brief clinical reasoning (2-3 sentences maximum)"
-        "3. Key supporting evidence from the case"
+        "2. Brief mathematical reasoning (2-3 sentences maximum)"
+        "3. Key supporting mathematical evidence from the problem"
         
-        "Focus on demonstrating clinical competence and sound medical judgment. Your response will be evaluated against another expert's answer."
+        "Focus on demonstrating mathematical competence and sound mathematical judgment. Your response will be evaluated against another expert's answer."
     )
-    logger.info(f"Generated answer prompt for case length {len(case_text)} and question length {len(question_text)}")
+    logger.info(f"Generated mathematical reasoning answer prompt for problem length {len(case_text)} and question length {len(question_text)}")
     return prompt
 
 def generate_judge_prompt(case_text: str, question_text: str, first_response: str, second_response: str):
     """Template for prompting judge models to evaluate responses."""
     prompt = (
-        f"Clinical Case:\n{case_text}\n\n"
+        f"Mathematical Problem:\n{case_text}\n\n"
         f"Question:\n{question_text}\n\n"
         f"Response A:\n{first_response}\n\n"
         f"Response B:\n{second_response}\n\n"
-        "You are an expert medical reviewer evaluating two anonymous responses to the above clinical question. Your role is to determine which response demonstrates superior clinical competence."
+        "You are an expert mathematical reviewer evaluating two anonymous responses to the above mathematical question. Your role is to determine which response demonstrates superior mathematical reasoning competence."
         
         "Evaluation framework (weighted criteria):"
         
         "PRIMARY (70% weight):"
-        "- Clinical accuracy of diagnosis/recommendations"
-        "- Appropriateness of reasoning process and differential consideration"
-        "- Evidence-based justification for conclusions"
+        "- Mathematical accuracy of solutions/reasoning"
+        "- Appropriateness of mathematical methods and theorem application"
+        "- Rigor and logical validity of mathematical arguments"
         
         "SECONDARY (30% weight):"
-        "- Completeness without irrelevant information"
-        "- Recognition of clinical nuances and contraindications"
-        "- Appropriate confidence level and acknowledgment of uncertainty"
+        "- Completeness without irrelevant mathematical details"
+        "- Recognition of mathematical nuances and edge cases"
+        "- Appropriate confidence level and acknowledgment of mathematical uncertainty"
         
         "Evaluation process:"
-        "1. Identify any factual medical errors (automatic disqualification if dangerous)"
-        "2. Assess quality of clinical reasoning and differential diagnosis"
-        "3. Evaluate appropriateness of recommendations for this specific case"
-        "4. Consider which response shows deeper understanding of clinical context"
+        "1. Identify any factual mathematical errors (automatic disqualification if fundamentally incorrect)"
+        "2. Assess quality of mathematical reasoning and logical deduction"
+        "3. Evaluate appropriateness of mathematical methods for this specific problem"
+        "4. Consider which response shows deeper understanding of mathematical principles"
         
         "Decision rules:"
         "- Choose Response A, Response B, or Tie"
-        "- Ties only when responses are genuinely equivalent in clinical merit"
+        "- Ties only when responses are genuinely equivalent in mathematical merit"
         "- Shorter, more precise answers can be superior to longer, rambling ones"
-        "- Prioritize safety and appropriate clinical conservatism"
-        "- Consider: \"Which response would I trust more for patient care?\""
+        "- Prioritize mathematical rigor and appropriate mathematical conservatism"
+        "- Consider: \"Which response would I trust more for mathematical correctness?\""
         
-        "Focus exclusively on medical competence. Ignore formatting, writing style, or response structure unless it affects clinical clarity."
+        "Focus exclusively on mathematical competence. Ignore formatting, writing style, or response structure unless it affects mathematical clarity."
         
         "IMPORTANT: After your analysis, you MUST end your evaluation with a clear and explicit verdict using exactly one of these three formats:"
         
@@ -584,14 +586,14 @@ def generate_judge_prompt(case_text: str, question_text: str, first_response: st
         "IMPORTANT: If your verdict is not provided in exactly one of these three formats, your judgment will be considered invalid and automatically discarded. Judges who fail to follow this format will be removed from the judge pool and may incur an ELO rating penalty."
         
         "Examples of properly formatted verdicts:"
-        "Example 1: 'After evaluating both responses, Response A shows better diagnostic accuracy and clearer reasoning. VERDICT: Model A is superior'"
-        "Example 2: 'While both responses identify key issues, Response B provides better evidence and treatment rationale. VERDICT: Model B is superior'"
-        "Example 3: 'Both responses demonstrate equivalent clinical competence and reasoning. VERDICT: This is a tie'"
+        "Example 1: 'After evaluating both responses, Response A shows better mathematical accuracy and clearer reasoning. VERDICT: Response A is superior.'"
+        "Example 2: 'While both responses identify key concepts, Response B provides better mathematical rigor and theorem application. VERDICT: Response B is superior.'"
+        "Example 3: 'Both responses demonstrate equivalent mathematical competence and reasoning. VERDICT: This is a tie.'"
         
         "Your evaluation MUST end with the exact verdict format as shown above."
     )
     
-    logger.info(f"Generated judge evaluation prompt with standardized verdict format")
+    logger.info(f"Generated mathematical reasoning judge evaluation prompt with standardized verdict format")
     return prompt
 
 # Pairing and Tournament management functions
