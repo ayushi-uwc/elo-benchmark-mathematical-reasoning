@@ -33,7 +33,7 @@
 
 The evaluation of large language models has become increasingly critical as these systems are deployed in high-stakes applications, yet current benchmarking approaches suffer from fundamental limitations that compromise their validity and practical utility. Static evaluation datasets enable gaming and overfitting, while traditional metrics fail to account for the computational costs that determine real-world deployment feasibility. We introduce UNER (United Nasscom Elo Rating), a novel peer-federated evaluation framework that addresses these limitations through dynamic challenge generation and dual-track performance assessment.
 
-Our approach fundamentally reimagines model evaluation as a collaborative ecosystem where models serve simultaneously as competitors, judges, and challenge creators. The framework employs a Swiss-style tournament structure with dynamically generated clinical reasoning tasks, ensuring that evaluation content remains current and resistant to gaming strategies. Unlike traditional benchmarks that rely on static test sets, UNER continuously evolves its evaluation challenges through a peer-driven process where top-performing models generate novel clinical scenarios and questions.
+Our approach fundamentally reimagines model evaluation as a collaborative ecosystem where models serve simultaneously as competitors, judges, and challenge creators. The framework employs a Swiss-style tournament structure with dynamically generated mathematical reasoning tasks, ensuring that evaluation content remains current and resistant to gaming strategies. Unlike traditional benchmarks that rely on static test sets, UNER continuously evolves its evaluation challenges through a peer-driven process where top-performing models generate novel mathematical problems and solutions.
 
 The evaluation methodology incorporates a sophisticated dual-track Elo rating system that captures both raw performance quality and cost-adjusted efficiency. This approach recognizes that practical model deployment requires balancing accuracy against computational resources, providing stakeholders with nuanced insights into model utility across different operational constraints. The peer-judging mechanism employs competence-weighted vote aggregation, where model evaluations are weighted according to their demonstrated capabilities, creating a self-regulating assessment ecosystem.
 
@@ -67,15 +67,15 @@ The theoretical foundation rests on the principle that model capabilities can be
 
 ### Experimental Design
 
-Our evaluation framework operates through an iterative tournament structure where models participate in head-to-head competitions across dynamically generated clinical reasoning tasks. The choice of clinical reasoning as our evaluation domain stems from its requirement for complex multi-step reasoning, integration of diverse information sources, and clear performance criteria that can be objectively assessed.
+Our evaluation framework operates through an iterative tournament structure where models participate in head-to-head competitions across dynamically generated mathematical reasoning tasks. The choice of mathematical reasoning as our evaluation domain stems from its requirement for complex multi-step logical reasoning, integration of diverse mathematical concepts, and clear performance criteria that can be objectively assessed.
 
 The tournament employs a Swiss-style pairing system that ensures fair competition by matching models with similar skill levels while preventing repeated matchups. Models are stratified into performance bands based on their current Elo ratings, with pairings selected to minimize rating differences within acceptable bounds (typically 50-100 Elo points).
 
 ### Dynamic Challenge Generation
 
-Unlike static benchmarks, UNER generates novel evaluation challenges through a peer-driven process. The top-performing models serve as challenge generators, creating both clinical case scenarios and associated questions. This approach ensures that evaluation content remains current and challenging, as the most capable models are responsible for creating tests that push the boundaries of the field.
+Unlike static benchmarks, UNER generates novel evaluation challenges through a peer-driven process. The top-performing models serve as challenge generators, creating both mathematical problem scenarios and associated solution approaches. This approach ensures that evaluation content remains current and challenging, as the most capable models are responsible for creating tests that push the boundaries of the field.
 
-The challenge generation follows a two-stage protocol: first, selected models generate detailed clinical vignettes that present complex diagnostic scenarios; second, a different set of high-performing models formulate questions based on these cases. Quality control mechanisms ensure that generated content meets rigorous standards through committee review with an 80% approval threshold.
+The challenge generation follows a two-stage protocol: first, selected models generate detailed mathematical problems that present complex reasoning scenarios across domains like algebra, calculus, geometry, probability, and discrete mathematics; second, a different set of high-performing models formulate solution approaches and verification criteria based on these problems. Quality control mechanisms ensure that generated content meets rigorous standards through committee review with an 80% approval threshold.
 
 ### Peer Evaluation Framework
 
@@ -182,11 +182,11 @@ Our evaluation includes state-of-the-art models across different providers:
 
 ### Evaluation Domain
 
-We focus on clinical reasoning tasks that require:
-- Complex diagnostic reasoning
-- Integration of multiple data sources
-- Cost-sensitive decision making
-- Handling of uncertainty
+We focus on mathematical reasoning tasks that require:
+- Complex multi-step logical reasoning
+- Integration of multiple mathematical concepts
+- Algorithmic problem-solving strategies
+- Handling of abstract mathematical structures
 
 ### Hyperparameters
 
@@ -262,7 +262,7 @@ DETAILED LEADERBOARD
 
 ### Comprehensive Performance Evaluation
 
-Our evaluation framework has processed over 2,400 individual matches across 48 distinct large language models, representing the most comprehensive peer-federated evaluation of clinical reasoning capabilities to date. The tournament structure has generated statistically significant performance differentials while maintaining rigorous cost accounting across all participating models.
+Our evaluation framework has processed over 2,400 individual matches across 48 distinct large language models, representing the most comprehensive peer-federated evaluation of mathematical reasoning capabilities to date. The tournament structure has generated statistically significant performance differentials while maintaining rigorous cost accounting across all participating models.
 
 The complete leaderboard reveals a complex landscape of model capabilities, with clear performance tiers emerging across both raw performance and cost-adjusted metrics. The evaluation encompasses models ranging from cutting-edge frontier systems like GPT-4 and Claude-3 to more efficient alternatives like Gemini and specialized models like Qwen and Grok variants.
 
@@ -294,15 +294,15 @@ The dual-track rating system reveals sophisticated cost-performance relationship
 
 ### Domain-Specific Performance Patterns
 
-The clinical reasoning evaluation reveals distinct performance patterns across different types of medical challenges. Analysis of match outcomes by case complexity and clinical domain shows that top-tier models excel particularly in diagnostic reasoning tasks requiring integration of multiple data sources and consideration of rare conditions.
+The mathematical reasoning evaluation reveals distinct performance patterns across different types of mathematical challenges. Analysis of match outcomes by problem complexity and mathematical domain shows that top-tier models excel particularly in multi-step reasoning tasks requiring integration of multiple mathematical concepts and application of advanced problem-solving strategies.
 
-Models in the highest performance tier demonstrate superior performance on cases involving differential diagnosis, with win rates exceeding 70% against lower-tier opponents in complex diagnostic scenarios. However, performance gaps narrow considerably in straightforward clinical cases, suggesting that the evaluation successfully identifies models capable of handling clinical complexity rather than routine medical knowledge.
+Models in the highest performance tier demonstrate superior performance on problems involving complex algebraic manipulations, calculus applications, and geometric proofs, with win rates exceeding 70% against lower-tier opponents in advanced mathematical scenarios. However, performance gaps narrow considerably in straightforward computational problems, suggesting that the evaluation successfully identifies models capable of handling mathematical complexity rather than routine arithmetic operations.
 
 ### Judge Reliability and Evaluation Quality
 
 The peer evaluation system demonstrates strong reliability metrics, with inter-judge agreement correlating positively with judge ELO ratings (Pearson r = 0.74, p < 0.001). High-performing judges (ELO > 1550) show 87% agreement on clear-cut cases and 62% agreement on borderline decisions, indicating robust evaluation quality.
 
-The weighted voting system effectively leverages judge competence, with top-tier judges contributing disproportionately to final decisions while maintaining democratic input from the broader judge pool. Analysis of judge consistency shows that model-based evaluation achieves reliability comparable to expert human evaluation in clinical reasoning tasks.
+The weighted voting system effectively leverages judge competence, with top-tier judges contributing disproportionately to final decisions while maintaining democratic input from the broader judge pool. Analysis of judge consistency shows that model-based evaluation achieves reliability comparable to expert human evaluation in mathematical reasoning tasks.
 
 ### Longitudinal Performance Evolution
 
@@ -322,7 +322,7 @@ The comprehensive evaluation results demonstrate the full spectrum of model perf
 
 Detailed Logs have been uploaded to google drive
 
-[Detailed Logs](https://drive.google.com/drive/folders/1vZh4me-VpUhWxts7PyF3jnm0NJ-lGL_O?usp=sharing)
+[Detailed Logs](https://drive.google.com/drive/folders/1-43KtZsh6r_DBmSARjDxcEJkf1iw-ADR?usp=sharing)
 
 ```
 DETAILED LEADERBOARD
@@ -380,7 +380,7 @@ DETAILED LEADERBOARD
 └───┴──────────────────────────────┴────────┴────────┴──────────┴──────────┴────────────┴────────┴───────────┴────────┘
 ```
 
-This comprehensive evaluation reveals several critical insights about the current state of large language model capabilities in clinical reasoning. The performance distribution shows a clear hierarchy, with frontier models achieving raw ELO ratings above 1600, while the cost-adjusted rankings reveal significant efficiency variations that impact practical deployment considerations.
+This comprehensive evaluation reveals several critical insights about the current state of large language model capabilities in mathematical reasoning. The performance distribution shows a clear hierarchy, with frontier models achieving raw ELO ratings above 1600, while the cost-adjusted rankings reveal significant efficiency variations that impact practical deployment considerations.
 
 The tournament results demonstrate that model selection requires careful consideration of both performance and cost factors, as the optimal choice varies significantly depending on deployment constraints and use case requirements. Models like GPT-4.1 mini achieve exceptional cost efficiency while maintaining competitive performance, while others like Gemini 2.5 Pro excel in raw capability but face cost penalties in adjusted rankings.
 
@@ -415,7 +415,7 @@ Our comprehensive evaluation includes 48 state-of-the-art language models across
 **Other Notable Models:**
 - Command R 7B, Command A, Command R, Command R+, DeepSeek R1 Distill Llama 70B, Allamanda 2 7B, GPT-3.5 Turbo
 
-This diverse model pool spans different architectures, parameter counts, and optimization strategies, providing comprehensive coverage of the current large language model landscape. The evaluation includes both frontier models with cutting-edge capabilities and efficient alternatives optimized for cost-effective deployment.
+This diverse model pool spans different architectures, parameter counts, and optimization strategies, providing comprehensive coverage of the current large language model landscape. The evaluation includes both frontier models with cutting-edge mathematical reasoning capabilities and efficient alternatives optimized for cost-effective deployment.
 
 ## 🚀 Quick Start
 
@@ -613,7 +613,7 @@ This project is licensed under the [Creative Commons Attribution-ShareAlike 4.0 
 - Built with [LiteLLM](https://github.com/BerriAI/litellm) for unified LLM access
 - Inspired by chess Elo rating systems and [TrueSkill](https://www.microsoft.com/en-us/research/project/trueskill-ranking-system/)
 - Mathematical framework based on [Bradley-Terry models](https://en.wikipedia.org/wiki/Bradley%E2%80%93Terry_model)
-- Clinical evaluation methodology inspired by medical education assessment
+- Mathematical evaluation methodology inspired by educational assessment standards
 - Special thanks to the open-source AI research community
 
 ## 📞 Support & Resources
