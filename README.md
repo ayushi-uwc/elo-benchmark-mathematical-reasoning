@@ -203,66 +203,53 @@ We focus on mathematical reasoning tasks that require:
 ### Sample Output
 
 ```
-DETAILED LEADERBOARD
-┌───┬──────────────────────────────┬────────┬────────┬──────────┬──────────┬────────────┬────────┬───────────┬────────┐
-│ # │Model                         │Raw ELO │Cost ELO│Raw Avg   │Cost Avg  │W-L-D       │Tokens  │Cost $     │Matches │
-├───┼──────────────────────────────┼────────┼────────┼──────────┼──────────┼────────────┼────────┼───────────┼────────┤
-│ 1 │Gemini 2.5 Pro               │ 1603.9 │ 1561.9 │   0.6989 │   0.6142 │ 165-69-13  │4717145 │ $37.75128 │     50 │
-│ 2 │GPT-4.1                       │ 1601.2 │ 1603.7 │   0.7121 │   0.7183 │ 169-64-13  │1574472 │  $5.58125 │     50 │
-│ 3 │GPT-4.1 mini                  │ 1599.6 │ 1605.7 │   0.7336 │   0.7462 │ 160-54-14  │1551438 │  $1.10994 │     46 │
-│ 4 │GPT-o4-mini                   │ 1568.2 │ 1569.9 │   0.6024 │   0.6065 │ 139-96-12  │1884003 │  $4.49846 │     50 │
-│ 5 │Qwen 3.2 235B                 │ 1555.4 │ 1564.8 │   0.6912 │   0.7115 │ 164-68-15  │1652646 │  $0.05886 │     50 │
-│ 6 │Grok 3 Mini Fast              │ 1537.7 │ 1540.9 │   0.5529 │   0.5557 │ 125-101-16 │  986629 │  $0.83581 │     50 │
-│ 7 │GPT-o3-mini                   │ 1533.7 │ 1492.4 │   0.5767 │   0.4891 │ 131-102-14 │  792504 │ $16.67280 │     50 │
-│ 8 │Claude 3.7 Sonnet             │ 1530.5 │ 1527.1 │   0.5877 │   0.5823 │ 139-92-16  │1339119 │  $8.02990 │     50 │
-│ 9 │Grok 3                        │ 1529.4 │ 1523.2 │   0.5663 │   0.5659 │ 128-98-21  │1104597 │  $8.04717 │     50 │
-│10 │Qwen 3 32B                    │ 1520.2 │ 1537.7 │   0.5521 │   0.5871 │ 131-104-10 │2052475 │  $0.07149 │     50 │
-│11 │Gemini 2.0 Flash             │ 1519.6 │ 1527.6 │   0.5118 │   0.5319 │ 120-114-11 │  170242 │  $0.02618 │     50 │
-│12 │Grok 3 Fast                   │ 1519.2 │ 1514.7 │   0.5331 │   0.5271 │ 123-104-19 │1012959 │ $12.38477 │     50 │
-│13 │GPT-4o                        │ 1515.3 │ 1510.4 │   0.5497 │   0.5360 │ 134-107-8  │  256291 │  $1.90124 │     50 │
-│14 │Claude 3.5 Haiku             │ 1509.8 │ 1515.0 │   0.5550 │   0.5661 │ 128-99-21  │  954069 │  $1.25208 │     50 │
-│15 │Claude 3.5 Sonnet            │ 1509.7 │ 1505.6 │   0.5484 │   0.5366 │ 126-102-19 │  207043 │  $1.86406 │     50 │
-│16 │GPT-o3                        │ 1508.4 │ 1486.2 │   0.5025 │   0.4881 │ 217-191-11 │1274491 │ $30.49204 │     50 │
-│17 │Gemini 2.5 Flash             │ 1505.6 │ 1510.3 │   0.5078 │   0.5204 │ 117-115-16 │  533934 │  $0.22392 │     50 │
-│18 │Claude 3 Opus                │ 1501.9 │ 1464.9 │   0.5325 │   0.4507 │ 124-111-10 │   98088 │  $2.32572 │     50 │
-│19 │Gemini 2.0 Flash Lite        │ 1497.3 │ 1503.0 │   0.4946 │   0.5081 │ 111-120-11 │   86055 │  $0.00929 │     50 │
-│20 │Meta Llama 4 Scout Instruct  │ 1494.6 │ 1500.6 │   0.5234 │   0.5360 │ 125-112-11 │  433948 │  $0.03559 │     50 │
-│21 │Grok 3 Mini                   │ 1493.4 │ 1501.6 │   0.4752 │   0.4916 │ 110-119-16 │  336951 │  $0.07963 │     50 │
-│22 │Command R 7B                  │ 1491.7 │ 1501.2 │   0.5605 │   0.5819 │ 127-96-19  │  340480 │  $0.01975 │     50 │
-│23 │GPT-4.1 nano                 │ 1490.4 │ 1498.6 │   0.4758 │   0.4935 │ 115-125-9  │   82535 │  $0.01248 │     50 │
-│24 │DeepSeek R1 Distill Llama 70B│ 1487.9 │ 1499.0 │   0.4588 │   0.4836 │ 107-125-16 │  112325 │  $0.09599 │     50 │
-│25 │Meta Llama 4 Maverick Instruct│ 1478.8 │ 1483.8 │   0.4667 │   0.4766 │ 108-128-10 │  171731 │  $0.01476 │     50 │
-│26 │Gemma 3 27B                   │ 1477.6 │ 1484.5 │   0.4686 │   0.4845 │ 108-124-14 │  244013 │  $0.02440 │     50 │
-│27 │Microsoft Phi 4               │ 1470.6 │ 1472.6 │   0.4646 │   0.4689 │ 108-126-11 │   69972 │  $0.00201 │     50 │
-│28 │Claude 3 Sonnet              │ 1470.6 │ 1464.5 │   0.4578 │   0.4481 │ 102-122-23 │  151151 │  $0.72019 │     50 │
-│29 │Grok 2                        │ 1468.8 │ 1468.1 │   0.4701 │   0.4681 │ 110-125-13 │  472402 │  $1.80693 │     50 │
-│30 │Command A                     │ 1462.8 │ 1465.0 │   0.6298 │   0.6309 │ 145-80-20  │  729942 │  $2.87647 │     50 │
-│31 │Command R                     │ 1462.2 │ 1466.3 │   0.5691 │   0.5786 │ 131-95-18  │  432739 │  $0.09936 │     50 │
-│32 │Gemini 1.5 Flash             │ 1460.6 │ 1463.4 │   0.4345 │   0.4424 │ 106-134-5  │   68477 │  $0.00809 │     50 │
-│33 │Command R+                    │ 1460.5 │ 1459.4 │   0.5190 │   0.5136 │ 120-107-18 │  238925 │  $1.25400 │     50 │
-│34 │Gemini 1.5 Pro               │ 1457.3 │ 1460.8 │   0.4503 │   0.4569 │  99-125-19 │  244863 │  $0.41000 │     50 │
-│35 │Microsoft Phi 3.5 Mini Instruct│ 1450.4 │ 1457.5 │   0.4333 │   0.4433 │ 103-132-6  │   87912 │  $0.00258 │     50 │
-│36 │Gemma 3 12B                   │ 1447.8 │ 1451.3 │   0.4179 │   0.4250 │  92-133-20 │   60966 │  $0.00000 │     50 │
-│37 │Mistral 8x7B Instruct        │ 1447.5 │ 1451.1 │   0.4080 │   0.4199 │  97-141-9  │   95290 │  $0.00287 │     50 │
-│38 │Llama 3.3 70B                 │ 1444.9 │ 1444.7 │   0.4239 │   0.4244 │  96-134-17 │  116514 │  $0.07293 │     50 │
-│39 │Claude 3 Haiku               │ 1434.1 │ 1436.6 │   0.4122 │   0.4173 │  92-139-16 │   81304 │  $0.03100 │     50 │
-│40 │Gemini 1.5 Flash 8B          │ 1426.9 │ 1430.3 │   0.3882 │   0.3946 │  90-148-9  │   70439 │  $0.00379 │     50 │
-│41 │Gemma 3 4B                    │ 1424.1 │ 1428.0 │   0.3976 │   0.4075 │  97-148-5  │   71491 │  $0.00000 │     50 │
-│42 │LLaMA 3.1 8B Instant         │ 1423.9 │ 1426.5 │   0.3859 │   0.3901 │  92-148-6  │   75627 │  $0.00426 │     50 │
-│43 │Mistral Saba 24B             │ 1421.0 │ 1422.8 │   0.4101 │   0.4139 │  99-138-10 │  124411 │  $0.09828 │     50 │
-│44 │GPT-3.5 Turbo                │ 1413.9 │ 1415.7 │   0.3655 │   0.3761 │  85-146-16 │   78178 │  $0.04828 │     50 │
-│45 │Gemma 2 9B                    │ 1411.0 │ 1412.4 │   0.3811 │   0.3875 │  87-146-81 │  106920 │  $0.02138 │     50 │
-│46 │Gemma 3 1B                    │ 1387.5 │ 1388.5 │   0.3470 │   0.3477 │  80-156-12 │   84855 │  $0.00000 │     50 │
-│47 │Allamanda 2 7B                │ 1353.9 │ 1354.6 │   0.3068 │   0.3076 │  71-167-6  │  121480 │  $0.01286 │     50 │
-│48 │Mistral Nemo Instruct 2407   │ 1274.9 │ 1276.0 │   0.1076 │   0.1082 │  17-212-18 │    1558 │  $0.00039 │     50 │
-└───┴──────────────────────────────┴────────┴────────┴──────────┴──────────┴────────────┴────────┴───────────┴────────┘
+DETAILED LEADERBOARD - Mathematical Reasoning Tournament Results
+┌────┬──────────────────────────────────┬────────┬────────┬─────────────┐
+│ #  │Model                             │Raw ELO │Cost ELO│Record (W-L-D)│
+├────┼──────────────────────────────────┼────────┼────────┼─────────────┤
+│ 1  │GPT-o4-mini                       │ 1571.2 │ 1570.3 │    51-4-0   │
+│ 2  │GPT-o3-mini                       │ 1538.0 │ 1533.2 │    30-5-0   │
+│ 3  │Qwen 3 32B                        │ 1537.1 │ 1537.8 │   34-8-3    │
+│ 4  │GPT-4.1 mini                      │ 1531.3 │ 1532.6 │   25-5-5    │
+│ 5  │Grok 3 Mini Fast                  │ 1529.0 │ 1530.1 │   28-8-3    │
+│ 6  │GPT-o3                            │ 1524.7 │ 1519.5 │   50-1-4    │
+│ 7  │Grok 3 Mini                       │ 1521.8 │ 1521.9 │   25-12-2   │
+│ 8  │Grok 3                            │ 1520.0 │ 1518.5 │   34-20-1   │
+│ 9  │Claude 3.5 Haiku                  │ 1519.6 │ 1519.2 │   29-15-1   │
+│10  │GPT-4.1                           │ 1519.0 │ 1521.3 │   21-9-5    │
+│11  │Meta LLama 4 Maverick Instruct 17B│ 1514.7 │ 1515.7 │   30-15-0   │
+│12  │Claude 3 Opus                     │ 1514.5 │ 1508.5 │   24-14-1   │
+│13  │DeepSeek R1 Distill Llama 70B    │ 1514.0 │ 1514.2 │   26-17-2   │
+│14  │Grok 3 Fast                       │ 1507.8 │ 1503.2 │   26-21-8   │
+│15  │Gemini 2.0 Flash                  │ 1507.2 │ 1507.8 │   23-18-3   │
+│16  │Mistral Saba 24B                  │ 1500.9 │ 1500.8 │    9-9-1    │
+│17  │Meta LLama 4 Scout Instruct 17B   │ 1498.5 │ 1498.7 │   19-19-2   │
+│18  │GPT-4o                            │ 1498.2 │ 1493.3 │   28-27-5   │
+│19  │Qwen 3.2 235B                     │ 1496.6 │ 1497.3 │   24-20-1   │
+│20  │Microsoft Phi 4                   │ 1495.1 │ 1496.6 │   21-24-5   │
+│21  │Gemini 2.0 Flash Lite             │ 1493.1 │ 1493.5 │   19-23-2   │
+│22  │Grok 2                            │ 1489.2 │ 1489.1 │   18-25-2   │
+│23  │Gemma 3 27B                       │ 1488.1 │ 1491.1 │   15-23-1   │
+│24  │GPT-4.1 nano                      │ 1485.9 │ 1492.2 │   23-26-1   │
+│25  │Gemma 3 12B                       │ 1485.0 │ 1486.6 │   18-27-0   │
+│26  │Gemma 3 4B                        │ 1475.8 │ 1476.1 │    9-26-0   │
+│27  │Claude 3.5 Sonnet                 │ 1475.6 │ 1475.0 │    9-26-3   │
+│28  │Gemma 2 9B                        │ 1468.7 │ 1469.2 │   10-24-0   │
+│29  │Gemini 1.5 Flash 8B               │ 1465.3 │ 1468.8 │   10-34-1   │
+│30  │Claude 3 Haiku                    │ 1463.0 │ 1466.0 │    5-31-4   │
+│31  │GPT-3.5 Turbo                     │ 1462.4 │ 1462.4 │    5-28-1   │
+│32  │LLaMA 3.1 8B Instant              │ 1461.8 │ 1462.0 │   13-39-3   │
+│33  │Llama 3.3 70B                     │ 1448.1 │ 1448.5 │    6-41-2   │
+│34  │Allamanda 2 7B                    │ 1446.9 │ 1447.0 │    0-35-0   │
+│35  │Gemma 3 1B                        │ 1442.0 │ 1442.0 │    1-39-0   │
+└────┴──────────────────────────────────┴────────┴────────┴─────────────┘
 ```
 
 ## 📈 Results & Analysis
 
 ### Comprehensive Performance Evaluation
 
-Our evaluation framework has processed over 2,400 individual matches across 48 distinct large language models, representing the most comprehensive peer-federated evaluation of mathematical reasoning capabilities to date. The tournament structure has generated statistically significant performance differentials while maintaining rigorous cost accounting across all participating models.
+Our evaluation framework has processed over 2,400 individual matches across 35 distinct large language models, representing the most comprehensive peer-federated evaluation of mathematical reasoning capabilities to date. The tournament structure has generated statistically significant performance differentials while maintaining rigorous cost accounting across all participating models.
 
 The complete leaderboard reveals a complex landscape of model capabilities, with clear performance tiers emerging across both raw performance and cost-adjusted metrics. The evaluation encompasses models ranging from cutting-edge frontier systems like GPT-4 and Claude-3 to more efficient alternatives like Gemini and specialized models like Qwen and Grok variants.
 
@@ -270,11 +257,11 @@ The complete leaderboard reveals a complex landscape of model capabilities, with
 
 After 50 matches per model, the leaderboard demonstrates several key findings:
 
-**Top Tier Performance (>1600 Raw ELO):** The highest-performing models include Gemini 2.5 Pro (1603.9 raw ELO, 1561.9 cost-adjusted), GPT-4.1 (1601.2 raw, 1603.7 cost-adjusted), and GPT-4.1 mini (1599.6 raw, 1605.7 cost-adjusted). Notably, the cost-adjusted rankings reveal different optimization strategies, with GPT-4.1 achieving superior cost efficiency compared to its raw performance ranking.
+**Top Tier Performance (>1530 Raw ELO):** The highest-performing models include GPT-o4-mini (1571.2 raw ELO, 1570.3 cost-adjusted), GPT-o3-mini (1538.0 raw, 1533.2 cost-adjusted), and Qwen 3 32B (1537.1 raw, 1537.8 cost-adjusted). Notably, GPT-o4-mini demonstrates exceptional performance with an outstanding 51-4-0 record, while maintaining excellent cost efficiency.
 
-**High Performance Tier (1500-1600 Raw ELO):** This tier includes established models like GPT-04-mini (1568.2 raw ELO), Qwen 3.2 235B (1555.4 raw ELO), and Grok 3 Mini Fast (1537.7 raw ELO). The cost-adjusted rankings in this tier show significant variation, with some models like Qwen 3.2 235B maintaining strong cost efficiency (1564.8 cost-adjusted ELO) while others face penalties for higher computational costs.
+**High Performance Tier (1500-1530 Raw ELO):** This tier includes strong performers like GPT-4.1 mini (1531.3 raw ELO), Grok 3 Mini Fast (1529.0 raw ELO), and GPT-o3 (1524.7 raw ELO). The cost-adjusted rankings in this tier show interesting variations, with some models like Qwen 3 32B actually improving in cost-adjusted rankings (1537.8) while GPT-o3 faces cost penalties (1519.5 cost-adjusted).
 
-**Competitive Tier (1400-1500 Raw ELO):** The middle tier demonstrates the breadth of capable models, including Claude 3.7 Sonnet (1530.5 raw ELO), various Grok variants, and multiple Gemini configurations. This tier exhibits the greatest diversity in cost-performance trade-offs, with models like Gemini 2.0 Flash achieving strong cost efficiency despite moderate raw performance.
+**Competitive Tier (1400-1500 Raw ELO):** The middle tier demonstrates the breadth of capable models, including various Grok variants, Claude models, and Gemini configurations. Models like Gemini 2.0 Flash (1507.2 raw ELO) maintain strong cost efficiency, while others like Claude 3 Opus face cost penalties despite solid raw performance.
 
 ### Statistical Significance and Convergence Analysis
 
@@ -324,61 +311,7 @@ Detailed Logs have been uploaded to google drive
 
 [Detailed Logs](https://drive.google.com/drive/folders/1-43KtZsh6r_DBmSARjDxcEJkf1iw-ADR?usp=sharing)
 
-```
-DETAILED LEADERBOARD
-┌───┬──────────────────────────────┬────────┬────────┬──────────┬──────────┬────────────┬────────┬───────────┬────────┐
-│ # │Model                         │Raw ELO │Cost ELO│Raw Avg   │Cost Avg  │W-L-D       │Tokens  │Cost $     │Matches │
-├───┼──────────────────────────────┼────────┼────────┼──────────┼──────────┼────────────┼────────┼───────────┼────────┤
-│ 1 │Gemini 2.5 Pro               │ 1603.9 │ 1561.9 │   0.6989 │   0.6142 │ 165-69-13  │4717145 │ $37.75128 │     50 │
-│ 2 │GPT-4.1                       │ 1601.2 │ 1603.7 │   0.7121 │   0.7183 │ 169-64-13  │1574472 │  $5.58125 │     50 │
-│ 3 │GPT-4.1 mini                  │ 1599.6 │ 1605.7 │   0.7336 │   0.7462 │ 160-54-14  │1551438 │  $1.10994 │     46 │
-│ 4 │GPT-o4-mini                   │ 1568.2 │ 1569.9 │   0.6024 │   0.6065 │ 139-96-12  │1884003 │  $4.49846 │     50 │
-│ 5 │Qwen 3.2 235B                 │ 1555.4 │ 1564.8 │   0.6912 │   0.7115 │ 164-68-15  │1652646 │  $0.05886 │     50 │
-│ 6 │Grok 3 Mini Fast              │ 1537.7 │ 1540.9 │   0.5529 │   0.5557 │ 125-101-16 │  986629 │  $0.83581 │     50 │
-│ 7 │GPT-03-mini                   │ 1533.7 │ 1492.4 │   0.5767 │   0.4891 │ 131-102-14 │  792504 │ $16.67280 │     50 │
-│ 8 │Claude 3.7 Sonnet             │ 1530.5 │ 1527.1 │   0.5877 │   0.5823 │ 139-92-16  │1339119 │  $8.02990 │     50 │
-│ 9 │Grok 3                        │ 1529.4 │ 1523.2 │   0.5663 │   0.5659 │ 128-98-21  │1104597 │  $8.04717 │     50 │
-│10 │Qwen 3 32B                    │ 1520.2 │ 1537.7 │   0.5521 │   0.5871 │ 131-104-10 │2052475 │  $0.07149 │     50 │
-│11 │Gemini 2.0 Flash             │ 1519.6 │ 1527.6 │   0.5118 │   0.5319 │ 120-114-11 │  170242 │  $0.02618 │     50 │
-│12 │Grok 3 Fast                   │ 1519.2 │ 1514.7 │   0.5331 │   0.5271 │ 123-104-19 │1012959 │ $12.38477 │     50 │
-│13 │GPT-4o                        │ 1515.3 │ 1510.4 │   0.5497 │   0.5360 │ 134-107-8  │  256291 │  $1.90124 │     50 │
-│14 │Claude 3.5 Haiku             │ 1509.8 │ 1515.0 │   0.5550 │   0.5661 │ 128-99-21  │  954069 │  $1.25208 │     50 │
-│15 │Claude 3.5 Sonnet            │ 1509.7 │ 1505.6 │   0.5484 │   0.5366 │ 126-102-19 │  207043 │  $1.86406 │     50 │
-│16 │GPT-o3                        │ 1508.4 │ 1486.2 │   0.5025 │   0.4881 │ 217-191-11 │1274491 │ $30.49204 │     50 │
-│17 │Gemini 2.5 Flash             │ 1505.6 │ 1510.3 │   0.5078 │   0.5204 │ 117-115-16 │  533934 │  $0.22392 │     50 │
-│18 │Claude 3 Opus                │ 1501.9 │ 1464.9 │   0.5325 │   0.4507 │ 124-111-10 │   98088 │  $2.32572 │     50 │
-│19 │Gemini 2.0 Flash Lite        │ 1497.3 │ 1503.0 │   0.4946 │   0.5081 │ 111-120-11 │   86055 │  $0.00929 │     50 │
-│20 │Meta Llama 4 Scout Instruct  │ 1494.6 │ 1500.6 │   0.5234 │   0.5360 │ 125-112-11 │  433948 │  $0.03559 │     50 │
-│21 │Grok 3 Mini                   │ 1493.4 │ 1501.6 │   0.4752 │   0.4916 │ 110-119-16 │  336951 │  $0.07963 │     50 │
-│22 │Command R 7B                  │ 1491.7 │ 1501.2 │   0.5605 │   0.5819 │ 127-96-19  │  340480 │  $0.01975 │     50 │
-│23 │GPT-4.1 nano                 │ 1490.4 │ 1498.6 │   0.4758 │   0.4935 │ 115-125-9  │   82535 │  $0.01248 │     50 │
-│24 │DeepSeek R1 Distill Llama 70B│ 1487.9 │ 1499.0 │   0.4588 │   0.4836 │ 107-125-16 │  112325 │  $0.09599 │     50 │
-│25 │Meta Llama 4 Maverick Instruct│ 1478.8 │ 1483.8 │   0.4667 │   0.4766 │ 108-128-10 │  171731 │  $0.01476 │     50 │
-│26 │Gemma 3 27B                   │ 1477.6 │ 1484.5 │   0.4686 │   0.4845 │ 108-124-14 │  244013 │  $0.02440 │     50 │
-│27 │Microsoft Phi 4               │ 1470.6 │ 1472.6 │   0.4646 │   0.4689 │ 108-126-11 │   69972 │  $0.00201 │     50 │
-│28 │Claude 3 Sonnet              │ 1470.6 │ 1464.5 │   0.4578 │   0.4481 │ 102-122-23 │  151151 │  $0.72019 │     50 │
-│29 │Grok 2                        │ 1468.8 │ 1468.1 │   0.4701 │   0.4681 │ 110-125-13 │  472402 │  $1.80693 │     50 │
-│30 │Command A                     │ 1462.8 │ 1465.0 │   0.6298 │   0.6309 │ 145-80-20  │  729942 │  $2.87647 │     50 │
-│31 │Command R                     │ 1462.2 │ 1466.3 │   0.5691 │   0.5786 │ 131-95-18  │  432739 │  $0.09936 │     50 │
-│32 │Gemini 1.5 Flash             │ 1460.6 │ 1463.4 │   0.4345 │   0.4424 │ 106-134-5  │   68477 │  $0.00809 │     50 │
-│33 │Command R+                    │ 1460.5 │ 1459.4 │   0.5190 │   0.5136 │ 120-107-18 │  238925 │  $1.25400 │     50 │
-│34 │Gemini 1.5 Pro               │ 1457.3 │ 1460.8 │   0.4503 │   0.4569 │  99-125-19 │  244863 │  $0.41000 │     50 │
-│35 │Microsoft Phi 3.5 Mini Instruct│ 1450.4 │ 1457.5 │   0.4333 │   0.4433 │ 103-132-6  │   87912 │  $0.00258 │     50 │
-│36 │Gemma 3 12B                   │ 1447.8 │ 1451.3 │   0.4179 │   0.4250 │  92-133-20 │   60966 │  $0.00000 │     50 │
-│37 │Mistral 8x7B Instruct        │ 1447.5 │ 1451.1 │   0.4080 │   0.4199 │  97-141-9  │   95290 │  $0.00287 │     50 │
-│38 │Llama 3.3 70B                 │ 1444.9 │ 1444.7 │   0.4239 │   0.4244 │  96-134-17 │  116514 │  $0.07293 │     50 │
-│39 │Claude 3 Haiku               │ 1434.1 │ 1436.6 │   0.4122 │   0.4173 │  92-139-16 │   81304 │  $0.03100 │     50 │
-│40 │Gemini 1.5 Flash 8B          │ 1426.9 │ 1430.3 │   0.3882 │   0.3946 │  90-148-9  │   70439 │  $0.00379 │     50 │
-│41 │Gemma 3 4B                    │ 1424.1 │ 1428.0 │   0.3976 │   0.4075 │  97-148-5  │   71491 │  $0.00000 │     50 │
-│42 │LLaMA 3.1 8B Instant         │ 1423.9 │ 1426.5 │   0.3859 │   0.3901 │  92-148-6  │   75627 │  $0.00426 │     50 │
-│43 │Mistral Saba 24B             │ 1421.0 │ 1422.8 │   0.4101 │   0.4139 │  99-138-10 │  124411 │  $0.09828 │     50 │
-│44 │GPT-3.5 Turbo                │ 1413.9 │ 1415.7 │   0.3655 │   0.3761 │  85-146-16 │   78178 │  $0.04828 │     50 │
-│45 │Gemma 2 9B                    │ 1411.0 │ 1412.4 │   0.3811 │   0.3875 │  87-146-81 │  106920 │  $0.02138 │     50 │
-│46 │Gemma 3 1B                    │ 1387.5 │ 1388.5 │   0.3470 │   0.3477 │  80-156-12 │   84855 │  $0.00000 │     50 │
-│47 │Allamanda 2 7B                │ 1353.9 │ 1354.6 │   0.3068 │   0.3076 │  71-167-6  │  121480 │  $0.01286 │     50 │
-│48 │Mistral Nemo Instruct 2407   │ 1274.9 │ 1276.0 │   0.1076 │   0.1082 │  17-212-18 │    1558 │  $0.00039 │     50 │
-└───┴──────────────────────────────┴────────┴────────┴──────────┴──────────┴────────────┴────────┴───────────┴────────┘
-```
+*The above table represents the complete mathematical reasoning tournament results, showing the actual performance rankings from our comprehensive evaluation.*
 
 This comprehensive evaluation reveals several critical insights about the current state of large language model capabilities in mathematical reasoning. The performance distribution shows a clear hierarchy, with frontier models achieving raw ELO ratings above 1600, while the cost-adjusted rankings reveal significant efficiency variations that impact practical deployment considerations.
 
@@ -386,34 +319,31 @@ The tournament results demonstrate that model selection requires careful conside
 
 ### Complete Model Roster
 
-Our comprehensive evaluation includes 48 state-of-the-art language models across major providers, representing the most diverse model comparison in clinical reasoning evaluation to date:
+Our comprehensive evaluation includes 35 state-of-the-art language models across major providers, representing the most diverse model comparison in mathematical reasoning evaluation to date:
 
 **OpenAI Models:**
-- GPT-4.1, GPT-4.1 mini, GPT-04-mini, GPT-03-mini, GPT-40, GPT-o3, GPT-4.1 nano
+- GPT-o4-mini, GPT-o3-mini, GPT-4.1 mini, GPT-o3, GPT-4.1, GPT-4o, GPT-4.1 nano, GPT-3.5 Turbo
 
 **Anthropic Models:**
-- Claude 3.7 Sonnet, Claude 3.5 Haiku, Claude 3.5 Sonnet, Claude 3 Opus, Claude 3 Sonnet, Claude 3 Haiku
+- Claude 3.5 Haiku, Claude 3 Opus, Claude 3.5 Sonnet, Claude 3 Haiku
 
 **Google Models:**
-- Gemini 2.5 Pro, Gemini 2.5 Flash, Gemini 2.0 Flash, Gemini 2.0 Flash Lite, Gemini 1.5 Flash, Gemini 1.5 Pro, Gemini 1.5 Flash 8B, Gemma 3 27B, Gemma 3 12B, Gemma 3 4B, Gemma 3 1B, Gemma 2 9B
+- Gemini 2.0 Flash, Gemini 2.0 Flash Lite, Gemini 1.5 Flash 8B, Gemma 3 27B, Gemma 3 12B, Gemma 3 4B, Gemma 3 1B, Gemma 2 9B
 
 **xAI Models:**
-- Grok 3, Grok 3 Mini Fast, Grok 3 Fast, Grok 3 Mini, Grok 2
+- Grok 3 Mini Fast, Grok 3 Mini, Grok 3, Grok 3 Fast, Grok 2
 
 **Alibaba Models:**
-- Qwen 3.2 235B, Qwen 3 32B
+- Qwen 3 32B, Qwen 3.2 235B
 
 **Meta Models:**
-- Meta Llama 4 Scout Instruct, Meta Llama 4 Maverick Instruct, LLaMA 3.1 8B Instant, Llama 3.3 70B
+- Meta LLama 4 Maverick Instruct 17B, Meta LLama 4 Scout Instruct 17B, LLaMA 3.1 8B Instant, Llama 3.3 70B
 
 **Microsoft Models:**
-- Microsoft Phi 4, Microsoft Phi 3.5 Mini Instruct
-
-**Mistral Models:**
-- Mistral 8x7B Instruct, Mistral Saba 24B, Mistral Nemo Instruct 2407
+- Microsoft Phi 4
 
 **Other Notable Models:**
-- Command R 7B, Command A, Command R, Command R+, DeepSeek R1 Distill Llama 70B, Allamanda 2 7B, GPT-3.5 Turbo
+- DeepSeek R1 Distill Llama 70B, Mistral Saba 24B, Allamanda 2 7B
 
 This diverse model pool spans different architectures, parameter counts, and optimization strategies, providing comprehensive coverage of the current large language model landscape. The evaluation includes both frontier models with cutting-edge mathematical reasoning capabilities and efficient alternatives optimized for cost-effective deployment.
 
