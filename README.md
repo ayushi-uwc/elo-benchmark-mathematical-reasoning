@@ -1,4 +1,4 @@
-# 🏆 Mathematical Reasoning Language Model Elo Rating
+# Mathematical Reasoning Language Model Elo Rating
 
 <div align="center">
 
@@ -10,7 +10,7 @@
 
 *A peer-federated evaluation framework addressing benchmark overfitting and cost-efficiency trade-offs in large language model assessment*
 
-[📈 Results](#-results) • [🚀 Quick Start](#-quick-start) • [🔧 Installation](#-installation)
+[Results](#-results) • [Quick Start](#-quick-start) • [Installation](#-installation)
 
 </div>
 
@@ -65,7 +65,7 @@ Detailed Logs have been uploaded to google drive
 
 *The above table represents the complete mathematical reasoning tournament results, showing the actual performance rankings from our comprehensive evaluation.*
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 - Python 3.8+
@@ -100,7 +100,7 @@ python main.py --batch-size 10 --stats
 python check_models.py
 ```
 
-## 🛠️ Installation
+## Installation
 
 ### Environment Setup
 
@@ -145,7 +145,7 @@ Add new models in `model_definitions.py`:
 }
 ```
 
-## 📊 Usage
+## Usage
 
 ### Command Line Interface
 
@@ -190,27 +190,27 @@ for match in matches:
 | `cost_temperature` | 0.05 | Cost sensitivity |
 | `judge_temperature` | 300 | Judge weight temperature |
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 elo-benchmark/
-├── 📄 main.py                    # Main entry point
-├── 🏆 tournament.py              # Tournament management and pairing
-├── 🤖 models.py                  # LLM model classes and Elo tracking
-├── ⚔️ matches.py                 # Match logic and prompt templates
-├── 🗄️ database.py                # MongoDB operations and data persistence
-├── ⚙️ config.py                  # Configuration and environment variables
-├── 📋 model_definitions.py       # Model specifications and pricing
-├── 📊 leaderboard.py             # Results display and ranking
-├── 🔍 check_models.py            # Model health checks and validation
-├── 📈 match_results_table.py     # Results analysis and visualization
-├── 🔧 logger_config.py           # Logging configuration
-├── 📝 logs/                      # Tournament logs and match history
-├── 🧪 tests/                     # Unit tests and integration tests
-└── 📚 docs/                      # Additional documentation
+├── main.py                    # Main entry point
+├── tournament.py              # Tournament management and pairing
+├── models.py                  # LLM model classes and Elo tracking
+├── matches.py                 # Match logic and prompt templates
+├── database.py                # MongoDB operations and data persistence
+├── config.py                  # Configuration and environment variables
+├── model_definitions.py       # Model specifications and pricing
+├── leaderboard.py             # Results display and ranking
+├── check_models.py            # Model health checks and validation
+├── match_results_table.py     # Results analysis and visualization
+├── logger_config.py           # Logging configuration
+├── logs/                      # Tournament logs and match history
+├── tests/                     # Unit tests and integration tests
+└── docs/                      # Additional documentation
 ```
 
-## 🤝 Contributing
+## Contributing
 
 We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for details.
 
@@ -238,12 +238,12 @@ We particularly welcome:
 - Efficiency optimizations
 - Empirical studies and analysis
 
-## 📄 License
+## License
 
 This project is licensed under the ([![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 ).
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 - Built with [LiteLLM](https://github.com/BerriAI/litellm) for unified LLM access
 - Inspired by chess Elo rating systems and [TrueSkill](https://www.microsoft.com/en-us/research/project/trueskill-ranking-system/)
