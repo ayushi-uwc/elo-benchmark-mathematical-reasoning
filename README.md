@@ -76,7 +76,7 @@ Detailed Logs have been uploaded to google drive
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/elo-benchmark.git
+git clone https://github.com/yourusername/elo-benchmark-mathematical-reasoning.git
 cd elo-benchmark
 
 # Install dependencies
@@ -106,7 +106,7 @@ python check_models.py
 
 1. **Clone Repository**
 ```bash
-git clone https://github.com/yourusername/elo-benchmark.git
+git clone https://github.com/yourusername/elo-benchmark-mathematical-reasoning.git
 cd elo-benchmark
 ```
 
@@ -218,7 +218,7 @@ We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.
 
 ```bash
 # Clone and setup development environment
-git clone https://github.com/yourusername/elo-benchmark.git
+git clone https://github.com/yourusername/elo-benchmark-mathematical-reasoning.git
 cd elo-benchmark
 pip install -r requirements-dev.txt
 
