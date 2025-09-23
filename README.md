@@ -254,8 +254,4 @@ This project is licensed under the ([![License: MIT](https://img.shields.io/badg
 
 <div align="center">
 
-**⭐ Star this repo if you find it useful for your research! ⭐**
-
-Made with ❤️ by the UNER research team
-
 </div>
