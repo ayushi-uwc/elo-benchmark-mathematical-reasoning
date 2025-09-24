@@ -61,7 +61,7 @@ DETAILED LEADERBOARD - Mathematical Reasoning Tournament Results
 
 Detailed Logs have been uploaded to google drive
 
-[Detailed Logs](https://drive.google.com/drive/folders/1-43KtZsh6r_DBmSARjDxcEJkf1iw-ADR?usp=sharing)
+[Detailed Logs](https://drive.google.com/drive/folders/19368lLGwuYc7eqgG9wAnG45B1mnmkLnB?usp=sharing)
 
 *The above table represents the complete mathematical reasoning tournament results, showing the actual performance rankings from our comprehensive evaluation.*
 
